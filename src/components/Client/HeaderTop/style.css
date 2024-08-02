@@ -1,0 +1,22 @@
+.alert-custom {
+    background: #008080 !important;
+    height: 40px;
+    line-height: 40px;
+    color: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.container-custom {
+    font-size: 12px;
+}
+
+.link-custom {
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+}
+
+.hotline {
+    color: #f8c144;
+}

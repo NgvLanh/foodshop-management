@@ -1,0 +1,58 @@
+/* .gradient-custom { */
+    /* fallback for old browsers */
+    /* background: #f093fb; */
+    
+    /* Chrome 10-25, Safari 5.1-6 */
+    /* background: -webkit-linear-gradient(to bottom right, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1)); */
+    
+    /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    /* background: linear-gradient(to bottom right, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1)) */
+    /* } */
+/* style.css */
+
+/* Căn chỉnh bảng */
+.table-wrap {
+    width: 100%;
+    overflow-x: auto; /* Cho phép cuộn ngang nếu nội dung vượt quá chiều rộng */
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse; /* Đảm bảo không có khoảng cách giữa các cell */
+  }
+  
+  .table td, .table th {
+    text-align: center; /* Căn giữa nội dung bảng */
+    padding: 0.75rem; /* Thêm khoảng cách bên trong các ô */
+  }
+  
+  .table thead th {
+    background-color: #f8f9fa; /* Màu nền cho tiêu đề bảng */
+    font-weight: bold;
+  }
+  
+  /* Căn chỉnh tiêu đề */
+  h2 {
+    text-align: center;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  /* Thay đổi khoảng cách giữa các hàng trong bảng */
+.table tbody tr {
+    line-height: 1.2; /* Giảm khoảng cách giữa các hàng */
+  }
+  
+  .table th, .table td {
+    padding: 0.5rem; /* Điều chỉnh padding để giảm khoảng cách */
+  }
+  
+  .table td {
+    vertical-align: middle; /* Căn chỉnh các ô dọc */
+  }
+  
+  /* Thay đổi kích thước của nút Xóa */
+  .table .btn-danger {
+    padding: 0.25rem 0.5rem; /* Giảm padding cho nút */
+    font-size: 0.875rem; /* Điều chỉnh kích thước font của nút */
+  }
+  

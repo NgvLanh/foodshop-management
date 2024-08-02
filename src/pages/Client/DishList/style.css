@@ -1,0 +1,27 @@
+.filter-bar {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-item {
+    cursor: pointer;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.filter-item:hover {
+    background-color: #e2e6ea;
+}
+
+.filter-item.active {
+    background-color: #007bff;
+    color: white;
+}
