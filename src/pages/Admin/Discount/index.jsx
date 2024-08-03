@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form';
 import { Container, Row, Col, Card, Button, Form, Table, Modal } from 'react-bootstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css'; 
 import './style.css';
 import request from '../../../config/apiConfig';
 
@@ -14,14 +16,7 @@ const Discount = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editIndex, setEditIndex] = useState(null);
 
-    const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm({
-        defaultValues: {
-            dateEnd: '',
-            quantity: '',
-            quota: '',
-            percentNumber: ''
-        }
-    });
+    const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm();
 
     useEffect(() => {
         fillDataDiscount();
@@ -101,6 +96,22 @@ const Discount = () => {
         }
     };
 
+    const confirmDelete = (id) => {
+        confirmAlert({
+            title: 'Xác nhận xóa',
+            message: 'Bạn có chắc chắn muốn xóa giảm giá này không?',
+            buttons: [
+                {
+                    label: 'Có',
+                    onClick: () => handleDelete(id)
+                },
+                {
+                    label: 'Không'
+                }
+            ]
+        });
+    };
+
     const getCurrentDate = () => {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -176,7 +187,7 @@ const Discount = () => {
                                                 <Button variant="warning" size="sm" onClick={() => handleEdit(index)}>
                                                     <FaEdit /> Sửa
                                                 </Button>{' '}
-                                                <Button variant="danger" size="sm" onClick={() => handleDelete(discount.id)}>
+                                                <Button variant="danger" size="sm" onClick={() => confirmDelete(discount.id)}>
                                                     <FaTrash /> Xóa
                                                 </Button>
                                             </td>
@@ -244,20 +255,20 @@ const Discount = () => {
                                 {...register('percentNumber', {
                                     required: 'Phần trăm không được bỏ trống',
                                     min: { value: 1, message: 'Phần trăm phải lớn hơn 0' },
-                                    max: { value: 30, message: 'Phần trăm phải nhỏ hơn hoặc bằng 30' }
+                                    max: { value: 100, message: 'Phần trăm phải nhỏ hơn hoặc bằng 100' }
                                 })}
                             />
                             <Form.Label htmlFor="percentNumber">Phần Trăm</Form.Label>
                             {errors.percentNumber && <Form.Text className="text-danger">{errors.percentNumber.message}</Form.Text>}
                         </Form.Floating>
-                        <Modal.Footer>
-                            <Button variant="secondary" onClick={handleCloseModal}>
-                                Đóng
+                        <div className="d-flex justify-content-end">
+                            <Button variant="secondary" onClick={handleCloseModal} className="me-2">
+                                Hủy
                             </Button>
-                            <Button type="submit" variant="primary">
-                                {isEditing ? 'Lưu Thay Đổi' : 'Thêm Giảm Giá'}
+                            <Button variant="primary" type="submit">
+                                {isEditing ? 'Cập Nhật' : 'Thêm'}
                             </Button>
-                        </Modal.Footer>
+                        </div>
                     </Form>
                 </Modal.Body>
             </Modal>
