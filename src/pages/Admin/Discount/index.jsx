@@ -1,11 +1,106 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Container, Row, Col, Card, Button, Form, Table, Modal } from 'react-bootstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 import './style.css';
+import request from '../../../config/apiConfig';
 
 const Discount = () => {
+    const [discounts, setDiscounts] = useState([]);
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editIndex, setEditIndex] = useState(null);
+
+    const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm({
+        defaultValues: {
+            dateEnd: '',
+            quantity: '',
+            quota: '',
+            percentNumber: ''
+        }
+    });
+
+    useEffect(() => {
+        fillDataDiscount();
+    }, []);
+
+    const fillDataDiscount = async () => {
+        try {
+            const res = await request({
+                path: 'discounts'
+            });
+            setDiscounts(res.data);
+        } catch (error) {
+            console.log('Error getting discounts:', error);
+        }
+    };
+
+    const onSubmit = async (data) => {
+        const newDiscount = {
+            code: isEditing ? discounts[editIndex].code : generateRandomCode(),
+            createAt: isEditing ? discounts[editIndex].createAt : getCurrentDate(),
+            dateEnd: data.dateEnd,
+            quantity: Number(data.quantity),
+            quota: Number(data.quota),
+            percentNumber: data.percentNumber
+        };
+
+        try {
+            if (isEditing) {
+                await request({
+                    method: 'PUT',
+                    path: `discounts/${discounts[editIndex].id}`,
+                    data: newDiscount
+                });
+                fillDataDiscount();
+                toast.success('Đã cập nhật giảm giá thành công!');
+            } else {
+                await request({
+                    method: 'POST',
+                    path: 'discounts',
+                    data: newDiscount
+                });
+                fillDataDiscount();
+                toast.success('Đã thêm giảm giá thành công!');
+            }
+
+            setFormSubmitted(true);
+            reset();
+            setShowModal(false);
+            setIsEditing(false);
+            setEditIndex(null);
+        } catch (error) {
+            console.log('Error adding/updating discount:', error);
+        }
+    };
+
+    const handleEdit = (index) => {
+        const discount = discounts[index];
+        setValue('dateEnd', discount.dateEnd);
+        setValue('quantity', discount.quantity);
+        setValue('quota', discount.quota);
+        setValue('percentNumber', discount.percentNumber);
+        setIsEditing(true);
+        setEditIndex(index);
+        setShowModal(true);
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await request({
+                method: 'DELETE',
+                path: `discounts/${id}`
+            });
+            fillDataDiscount();
+            toast.success('Đã xóa giảm giá thành công!');
+        } catch (error) {
+            console.log('Error deleting discount:', error);
+        }
+    };
+
     const getCurrentDate = () => {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -14,68 +109,8 @@ const Discount = () => {
         return `${yyyy}-${mm}-${dd}`;
     };
 
-    const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm({
-        defaultValues: {
-            startDate: getCurrentDate()
-        }
-    });
-    const [discounts, setDiscounts] = useState([]);
-    const [formSubmitted, setFormSubmitted] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showModal, setShowModal] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editIndex, setEditIndex] = useState(null);
-
     const generateRandomCode = () => {
         return Math.random().toString(36).substring(2, 10).toUpperCase();
-    };
-
-    const onSubmit = data => {
-        const newDiscount = {
-            code: isEditing ? discounts[editIndex].code : generateRandomCode(),
-            startDate: isEditing ? discounts[editIndex].startDate : getCurrentDate(), // Keep startDate for editing
-            endDate: data.endDate,
-            quantity: data.quantity,
-            quota: data.quota,
-            percentage: data.percentage
-        };
-
-        if (isEditing) {
-            const updatedDiscounts = discounts.map((discount, index) =>
-                index === editIndex ? newDiscount : discount
-            );
-            setDiscounts(updatedDiscounts);
-            toast.success('Đã cập nhật giảm giá thành công!');
-            setIsEditing(false);
-            setEditIndex(null);
-        } else {
-            setDiscounts([...discounts, newDiscount]);
-            toast.success('Đã thêm giảm giá thành công!');
-        }
-
-        setFormSubmitted(true);
-        reset(); // Reset form fields after submission
-        setShowModal(false); // Close modal after submission
-    };
-
-    const filteredDiscounts = discounts.filter(discount =>
-        discount.code.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const handleEdit = index => {
-        const discount = discounts[index];
-        setValue('endDate', discount.endDate);
-        setValue('quantity', discount.quantity);
-        setValue('quota', discount.quota);
-        setValue('percentage', discount.percentage);
-        setIsEditing(true);
-        setEditIndex(index);
-        setShowModal(true);
-    };
-
-    const handleDelete = code => {
-        setDiscounts(discounts.filter(discount => discount.code !== code));
-        toast.success('Đã xóa giảm giá thành công!');
     };
 
     const handleShowModal = () => {
@@ -86,6 +121,10 @@ const Discount = () => {
     };
 
     const handleCloseModal = () => setShowModal(false);
+
+    const filteredDiscounts = discounts.filter(discount =>
+        discount.code.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <Container fluid style={{ background: '#f7f4f4', height: '100vh' }}>
@@ -126,18 +165,18 @@ const Discount = () => {
                                 </thead>
                                 <tbody>
                                     {filteredDiscounts.map((discount, index) => (
-                                        <tr key={index}>
+                                        <tr key={discount.id}>
                                             <td>{discount.code}</td>
-                                            <td>{discount.startDate}</td>
-                                            <td>{discount.endDate}</td>
+                                            <td>{discount.createAt}</td>
+                                            <td>{discount.dateEnd}</td>
                                             <td>{discount.quantity}</td>
                                             <td>{discount.quota}</td>
-                                            <td>{discount.percentage}%</td>
+                                            <td>{discount.percentNumber}%</td>
                                             <td>
                                                 <Button variant="warning" size="sm" onClick={() => handleEdit(index)}>
                                                     <FaEdit /> Sửa
                                                 </Button>{' '}
-                                                <Button variant="danger" size="sm" onClick={() => handleDelete(discount.code)}>
+                                                <Button variant="danger" size="sm" onClick={() => handleDelete(discount.id)}>
                                                     <FaTrash /> Xóa
                                                 </Button>
                                             </td>
@@ -160,15 +199,15 @@ const Discount = () => {
                         <Form.Floating className="mb-3">
                             <Form.Control
                                 type="date"
-                                id="endDate"
+                                id="dateEnd"
                                 placeholder="Ngày kết thúc"
-                                {...register('endDate', {
+                                {...register('dateEnd', {
                                     required: 'Ngày kết thúc không được bỏ trống',
                                     validate: value => value >= getCurrentDate() || 'Ngày kết thúc không thể trước ngày hiện tại'
                                 })}
                             />
-                            <Form.Label htmlFor="endDate">Ngày Kết Thúc</Form.Label>
-                            {errors.endDate && <Form.Text className="text-danger">{errors.endDate.message}</Form.Text>}
+                            <Form.Label htmlFor="dateEnd">Ngày Kết Thúc</Form.Label>
+                            {errors.dateEnd && <Form.Text className="text-danger">{errors.dateEnd.message}</Form.Text>}
                         </Form.Floating>
                         <Form.Floating className="mb-3">
                             <Form.Control
@@ -200,23 +239,25 @@ const Discount = () => {
                         <Form.Floating className="mb-3">
                             <Form.Control
                                 type="number"
-                                id="percentage"
+                                id="percentNumber"
                                 placeholder="Phần trăm"
-                                {...register('percentage', {
+                                {...register('percentNumber', {
                                     required: 'Phần trăm không được bỏ trống',
                                     min: { value: 1, message: 'Phần trăm phải lớn hơn 0' },
                                     max: { value: 30, message: 'Phần trăm phải nhỏ hơn hoặc bằng 30' }
                                 })}
                             />
-                            <Form.Label htmlFor="percentage">Phần Trăm</Form.Label>
-                            {errors.percentage && <Form.Text className="text-danger">{errors.percentage.message}</Form.Text>}
+                            <Form.Label htmlFor="percentNumber">Phần Trăm</Form.Label>
+                            {errors.percentNumber && <Form.Text className="text-danger">{errors.percentNumber.message}</Form.Text>}
                         </Form.Floating>
-                        <Button variant="secondary" type="reset" className="mt-3 me-2" onClick={() => { reset(); setIsEditing(false); setEditIndex(null); }}>
-                            Reset
-                        </Button>
-                        <Button variant="primary" type="submit" className="mt-3">
-                            {isEditing ? 'Lưu' : 'Thêm'}
-                        </Button>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={handleCloseModal}>
+                                Đóng
+                            </Button>
+                            <Button type="submit" variant="primary">
+                                {isEditing ? 'Lưu Thay Đổi' : 'Thêm Giảm Giá'}
+                            </Button>
+                        </Modal.Footer>
                     </Form>
                 </Modal.Body>
             </Modal>
