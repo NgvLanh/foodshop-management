@@ -9,7 +9,6 @@ import { confirmAlert } from 'react-confirm-alert';
 const Customer = () => {
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fillDataCustomer();
@@ -21,10 +20,8 @@ const Customer = () => {
         path: 'customers'
       });
       setCustomers(fill.data);
-      setLoading(false);
     } catch (error) {
       console.log('Error get customer:' + error);
-      setLoading(false);
     }
   };
 
@@ -37,7 +34,6 @@ const Customer = () => {
       setCustomers(customers.filter((customer) => customer.id !== customerId));
       toast.success('Customer deleted successfully');
     } catch (error) {
-      console.error('Error deleting customer:', error);
       toast.error('Failed to delete customer');
     }
   };
@@ -73,7 +69,6 @@ const Customer = () => {
       ));
       toast.success('Customer status updated');
     } catch (error) {
-      console.error('Error updating customer status:', error);
       toast.error('Failed to update customer status');
     }
   };
@@ -85,10 +80,6 @@ const Customer = () => {
   const filteredCustomers = customers.filter((customer) =>
     customer.phoneNumber.includes(search)
   );
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
 
   return (
     <Container fluid style={{ background: '#f7f4f4', height: '100vh' }}>

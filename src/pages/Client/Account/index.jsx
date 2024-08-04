@@ -2,19 +2,57 @@ import { useState } from 'react';
 import { Form, Button, Container, Row, Col, Tabs, Tab } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import toast, { Toaster } from 'react-hot-toast';
-import axios from 'axios';
+import response from '../../../config/apiConfig'
+import { Navigate, useNavigate } from 'react-router-dom';
+import { loginApi } from '../../../services/Auth';
+import { useCookies } from 'react-cookie';
+import request from '../../../config/apiConfig';
+
 
 const Account = () => {
+    const [cookies, setCookie, removeCookie] = useCookies(["token", "role"]);
+
+    const navigate = useNavigate();
     const [key, setKey] = useState('login');
     const { register: login, handleSubmit: handleSubmitLogin, formState: { errors: errorsLogin } } = useForm();
     const { register: register, handleSubmit: handleSubmitRegister, formState: { errors: errorsRegister }, watch } = useForm();
 
     const onLoginSubmit = async (data) => {
-        
+        try {
+            const res = await loginApi(data);
+            console.log(res.data);
+            
+            if (res.success) {
+                setCookie('token', JSON.stringify(res.data.token))
+                localStorage.setItem('token', JSON.stringify(res.data.token));
+                await toast.success('Đăng nhập thành công.');
+                navigate('/home');
+                window.location.reload();
+            } else {
+                toast.error('Mật khẩu hoặc email không đúng.');
+            }
+        } catch (error) {
+            alert(error);
+        }
     };
 
     const onRegisterSubmit = async (data) => {
-        
+        try {
+            const res = await request({
+                method: 'POST',
+                path: 'customers',
+                data: data
+            });
+
+            if (res.success) {
+                toast.success('Đăng ký thành công.');
+            } else {
+                toast.error(res.message);
+            }
+        } catch (error) {
+            alert(error);
+        }
+
     };
 
     return (
@@ -91,6 +129,26 @@ const Account = () => {
                         <Col md={6}>
                             <h2 className='text-center mb-2'>Đăng ký</h2>
                             <Form onSubmit={handleSubmitRegister(onRegisterSubmit)}>
+                                <Form.Group className="form-floating mb-3" controlId="formRegisterName">
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Nhập tên của bạn"
+                                        {...register('fullName', {
+                                            required: "Tên là bắt buộc",
+                                            minLength: {
+                                                value: 2,
+                                                message: 'Tên phải có ít nhất 2 ký tự'
+                                            }
+                                        })}
+                                    />
+                                    <Form.Label>Họ tên</Form.Label>
+                                    {errorsRegister.fullName && (
+                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                            {errorsRegister.fullName.message}
+                                        </Form.Text>
+                                    )}
+                                </Form.Group>
+
                                 <Form.Group className="form-floating mb-3" controlId="formRegisterEmail">
                                     <Form.Control
                                         type="email"
@@ -111,11 +169,37 @@ const Account = () => {
                                     )}
                                 </Form.Group>
 
+                                <Form.Group className="form-floating mb-3" controlId="formRegisterPhoneNumber">
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Nhập số điện thoại của bạn"
+                                        {...register('phoneNumber', {
+                                            required: "Số điện thoại là bắt buộc",
+                                            pattern: {
+                                                value: /^[0-9]{10}$/,
+                                                message: "Số điện thoại không hợp lệ"
+                                            }
+                                        })}
+                                    />
+                                    <Form.Label>Số điện thoại</Form.Label>
+                                    {errorsRegister.phoneNumber && (
+                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                            {errorsRegister.phoneNumber.message}
+                                        </Form.Text>
+                                    )}
+                                </Form.Group>
+
                                 <Form.Group className="form-floating mb-3" controlId="formRegisterPassword">
                                     <Form.Control
                                         type="password"
                                         placeholder="Nhập mật khẩu của bạn"
-                                        {...register('password', { required: "Mật khẩu là bắt buộc" })}
+                                        {...register('password', {
+                                            required: "Mật khẩu là bắt buộc",
+                                            minLength: {
+                                                value: 6,
+                                                message: 'Mật khẩu phải có ít nhất 6 ký tự'
+                                            }
+                                        })}
                                     />
                                     <Form.Label>Mật khẩu</Form.Label>
                                     {errorsRegister.password && (

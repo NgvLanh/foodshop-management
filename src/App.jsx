@@ -21,24 +21,46 @@ import BookTable from "./pages/Client/BookTable";
 import Cart from "./pages/Client/Cart";
 import YourTable from "./pages/Client/YourTable";
 import Account from "./pages/Client/Account";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from "react-hot-toast";
+
+
+const useAuth = () => {
+  const token = localStorage.getItem('token');
+  return token;
+};
+
+const ProtectedRoute = ({ element }) => {
+  const navigate = useNavigate();
+  const isAuthenticated = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/account');
+    }
+  }, [isAuthenticated, navigate]);
+
+  return isAuthenticated ? element : null;
+};
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route>
-      {/* Client link */}
+      {/* Đường dẫn cho client */}
       <Route path="/" element={<Client />}>
         <Route index element={<Home />} />
         <Route path="home" element={<Home />} />
         <Route path="dish-list" element={<DishList />} />
         <Route path="about-us" element={<AboutUs />} />
         <Route path="book-table" element={<BookTable />} />
-        <Route path="cart" element={<Cart />} />
-        <Route path="your-table" element={<YourTable />} />
+        <Route path="cart" element={<ProtectedRoute element={<Cart />} />} /> {/* Bảo vệ đường dẫn /cart */}
+        <Route path="your-table" element={<ProtectedRoute element={<YourTable />} />} /> {/* Bảo vệ đường dẫn /your-table */}
         <Route path="account" element={<Account />} />
       </Route>
 
-      {/* Admin link */}
-      <Route path="/admin" element={< Admin />}>
+      {/* Đường dẫn cho admin */}
+      <Route path="/admin" element={<Admin />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="menu" element={<Menu />} />
         <Route path="category" element={<Category />} />
@@ -49,9 +71,9 @@ const router = createBrowserRouter(
         <Route path="discount" element={<Discount />} />
         <Route path="order" element={<Order />} />
         <Route path="dish" element={<Dish />} />
-      </Route >
+      </Route>
       <Route path="*" element={<NotFound />} />
-    </Route >
+    </Route>
   )
 );
 

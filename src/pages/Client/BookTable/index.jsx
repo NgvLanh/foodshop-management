@@ -1,26 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Container, Card, Button, Modal, Form, Row, Col, Pagination } from 'react-bootstrap';
-import response from '../../../config/apiConfig'
+import response from '../../../config/apiConfig';
 import { FaChair } from 'react-icons/fa';
 import { MdOutlineTableBar } from 'react-icons/md';
 
 const BookTable = () => {
     const [tables, setTables] = useState([]);
     const uniqueSeats = [...new Set(tables.map(table => table.seats))];
-
     const [selectedTable, setSelectedTable] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8; 
+    const itemsPerPage = 8;
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [customerName, setCustomerName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [bookingTime, setBookingTime] = useState('');
+    const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
 
     useEffect(() => {
         fetchDataTables();
     }, []);
-
 
     const fetchDataTables = async () => {
         const res = await response({
@@ -28,6 +25,7 @@ const BookTable = () => {
         });
         setTables(res.data);
     }
+
     const handleTableClick = (table) => {
         setSelectedTable(table);
         setShowModal(true);
@@ -36,9 +34,7 @@ const BookTable = () => {
     const handleCloseModal = () => {
         setShowModal(false);
         setSelectedTable(null);
-        setCustomerName('');
-        setPhoneNumber('');
-        setBookingTime('');
+        setSelectedTimeSlot('');
     };
 
     const handlePageChange = (pageNumber) => {
@@ -54,8 +50,8 @@ const BookTable = () => {
     };
 
     const handleBookTable = () => {
-        // Handle the logic to book the table
-        alert(`Đã đặt bàn số ${selectedTable.tableNumber} cho ${customerName} vào lúc ${bookingTime}`);
+        // Handle the logic to book the table with the selected time slot
+        alert(`Đã đặt bàn số ${selectedTable.tableNumber} vào khoảng thời gian ${selectedTimeSlot}`);
         handleCloseModal();
     };
 
@@ -68,6 +64,15 @@ const BookTable = () => {
     };
 
     const totalPages = Math.ceil(filteredTables().length / itemsPerPage);
+
+    // Mốc thời gian đặt bàn
+    const timeSlots = [
+        '14h-16h',  // 2 PM - 4 PM
+        '16h-18h',  // 4 PM - 6 PM
+        '18h-20h',  // 6 PM - 8 PM
+        '20h-22h',  // 8 PM - 10 PM
+    ];
+    
 
     return (
         <Container className="mt-4">
@@ -102,7 +107,7 @@ const BookTable = () => {
                                         <FaChair key={index} style={{ marginRight: '5px' }} />
                                     ))}
                                 </Card.Text>
-                                <Card.Text>Trạng thái: {table.status ? 'Đang dùng' : 'Trống'}</Card.Text>
+                                <Card.Text>Trạng thái: <span style={{ color: `${table.status ? 'brown' : 'green'}` }}>{table.status ? 'Đang dùng' : 'Trống'}</span></Card.Text>
                                 <Button
                                     variant="primary"
                                     onClick={() => handleTableClick(table)}
@@ -136,31 +141,21 @@ const BookTable = () => {
                     </Modal.Header>
                     <Modal.Body>
                         <div className="d-flex flex-column align-items-center">
-                            <h5>Bàn số {selectedTable.tableNumber}</h5>
+                            <h5>Bàn số {selectedTable.number}</h5>
                             <p>Số ghế: {selectedTable.seats}</p>
-                            <Form.Group controlId="formCustomerName">
-                                <Form.Label>Họ tên:</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    value={customerName}
-                                    onChange={(e) => setCustomerName(e.target.value)}
-                                />
-                            </Form.Group>
-                            <Form.Group controlId="formPhoneNumber">
-                                <Form.Label>Số điện thoại:</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value)}
-                                />
-                            </Form.Group>
-                            <Form.Group controlId="formBookingTime">
-                                <Form.Label>Thời gian đặt bàn:</Form.Label>
-                                <Form.Control
-                                    type="datetime-local"
-                                    value={bookingTime}
-                                    onChange={(e) => setBookingTime(e.target.value)}
-                                />
+                            <Form.Group>
+                                <Form.Label>Chọn khoảng thời gian:</Form.Label>
+                                <div>
+                                    {timeSlots.map((slot) => (
+                                        <div
+                                            key={slot}
+                                            className={`filter-item ${selectedTimeSlot === slot ? 'active' : ''}`}
+                                            onClick={() => setSelectedTimeSlot(slot)}
+                                        >
+                                            {slot}
+                                        </div>
+                                    ))}
+                                </div>
                             </Form.Group>
                         </div>
                     </Modal.Body>
@@ -168,7 +163,7 @@ const BookTable = () => {
                         <Button variant="secondary" onClick={handleCloseModal}>
                             Đóng
                         </Button>
-                        <Button variant="primary" onClick={handleBookTable} disabled={!customerName || !phoneNumber || !bookingTime}>
+                        <Button variant="primary" onClick={handleBookTable} disabled={!selectedTimeSlot}>
                             Xác nhận đặt bàn
                         </Button>
                     </Modal.Footer>
