@@ -1,8 +1,8 @@
 import { Outlet } from 'react-router-dom';
 import Header from '../../../components/Client/Header'
-import HeaderTop from '../../../components/Client/HeaderTop/HeaderTop.jsx'
+import HeaderTop from '../../../components/Client/HeaderTop'
 import { Container } from 'react-bootstrap';
-import Footer from '../../../components/Client/Footer/index.jsx';
+import Footer from '../../../components/Client/Footer';
 
 const Client = () => {
 
@@ -10,9 +10,11 @@ const Client = () => {
         <div>
             <HeaderTop />
             <Header />
-            <Container>
-                <Outlet />
-            </Container>
+            <div className='pt-2'>
+                <Container>
+                    <Outlet />
+                </Container>
+            </div>
             <Footer />
         </div>
     )

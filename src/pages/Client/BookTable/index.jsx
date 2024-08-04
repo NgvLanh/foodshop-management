@@ -1,28 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Container, Card, Button, Modal, Form, Row, Col, Pagination } from 'react-bootstrap';
-
-// Sample data for tables
-const tablesData = [
-    { id: 1, tableNumber: 1, seats: 4, status: 'Available' },
-    { id: 2, tableNumber: 2, seats: 2, status: 'Available' },
-    { id: 3, tableNumber: 3, seats: 6, status: 'Occupied' },
-    { id: 4, tableNumber: 4, seats: 4, status: 'Available' },
-    { id: 5, tableNumber: 5, seats: 2, status: 'Available' },
-    // Add more tables here
-];
-
-const uniqueSeats = [...new Set(tablesData.map(table => table.seats))]; // Get unique seat numbers
+import response from '../../../config/apiConfig'
+import { FaChair } from 'react-icons/fa';
+import { MdOutlineTableBar } from 'react-icons/md';
 
 const BookTable = () => {
+    const [tables, setTables] = useState([]);
+    const uniqueSeats = [...new Set(tables.map(table => table.seats))];
+
     const [selectedTable, setSelectedTable] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10; // Number of tables per page
-    const [selectedSeats, setSelectedSeats] = useState([]); // State for selected seats
+    const itemsPerPage = 8; 
+    const [selectedSeats, setSelectedSeats] = useState([]);
     const [customerName, setCustomerName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [bookingTime, setBookingTime] = useState('');
 
+    useEffect(() => {
+        fetchDataTables();
+    }, []);
+
+
+    const fetchDataTables = async () => {
+        const res = await response({
+            path: 'tables'
+        });
+        setTables(res.data);
+    }
     const handleTableClick = (table) => {
         setSelectedTable(table);
         setShowModal(true);
@@ -40,7 +45,7 @@ const BookTable = () => {
         setCurrentPage(pageNumber);
     };
 
-    const handleSeatsClick = (seats) => { // Handle seat filter click
+    const handleSeatsClick = (seats) => {
         setSelectedSeats((prevSelectedSeats) =>
             prevSelectedSeats.includes(seats)
                 ? prevSelectedSeats.filter((s) => s !== seats)
@@ -55,17 +60,12 @@ const BookTable = () => {
     };
 
     const filteredTables = () => {
-        let filtered = tablesData;
-        if (selectedSeats.length > 0) { // Apply seats filtering
+        let filtered = tables;
+        if (selectedSeats.length > 0) {
             filtered = filtered.filter((table) => selectedSeats.includes(table.seats));
         }
         return filtered;
     };
-
-    // Pagination logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentTables = filteredTables().slice(indexOfFirstItem, indexOfLastItem);
 
     const totalPages = Math.ceil(filteredTables().length / itemsPerPage);
 
@@ -85,20 +85,24 @@ const BookTable = () => {
                                 className={`filter-item ${selectedSeats.includes(seats) ? 'active' : ''}`}
                                 onClick={() => handleSeatsClick(seats)}
                             >
-                                {seats} ghế
+                                {seats} Ghế
                             </div>
                         ))}
                     </div>
                 </Col>
             </Row>
             <Row>
-                {currentTables.map(table => (
+                {filteredTables().slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(table => (
                     <Col key={table.id} xs={12} sm={6} md={4} lg={3} className="mb-3">
                         <Card className="table-card">
                             <Card.Body className="table-card-body">
-                                <Card.Title>Bàn số {table.tableNumber}</Card.Title>
-                                <Card.Text>Số ghế: {table.seats}</Card.Text>
-                                <Card.Text>Trạng thái: {table.status}</Card.Text>
+                                <Card.Title><MdOutlineTableBar size={24} /> số {table.number}</Card.Title>
+                                <Card.Text>
+                                    {Array.from({ length: table.seats }).map((_, index) => (
+                                        <FaChair key={index} style={{ marginRight: '5px' }} />
+                                    ))}
+                                </Card.Text>
+                                <Card.Text>Trạng thái: {table.status ? 'Đang dùng' : 'Trống'}</Card.Text>
                                 <Button
                                     variant="primary"
                                     onClick={() => handleTableClick(table)}

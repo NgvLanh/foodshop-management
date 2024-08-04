@@ -1,26 +1,81 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Form } from 'react-bootstrap';
 import toast, { Toaster } from 'react-hot-toast';
 import { FaTrash } from 'react-icons/fa';
+import request from '../../../config/apiConfig';
+import 'react-confirm-alert/src/react-confirm-alert.css';
+import { confirmAlert } from 'react-confirm-alert';
 
 const Customer = () => {
-  // Dữ liệu giả lập
-  const [customers, setCustomers] = useState([
-    { id: 1, fullName: 'Nguyen Van A', phoneNumber: '0123456789', email: 'a@example.com', address: '123 Main St', active: true },
-    { id: 2, fullName: 'Tran Thi B', phoneNumber: '0987654321', email: 'b@example.com', address: '456 Second St', active: false }
-  ]);
+  const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const handleDelete = (customerId) => {
-    setCustomers(customers.filter((customer) => customer.id !== customerId));
-    toast.success('Customer deleted successfully');
+  useEffect(() => {
+    fillDataCustomer();
+  }, []);
+
+  const fillDataCustomer = async () => {
+    try {
+      const fill = await request({
+        path: 'customers'
+      });
+      setCustomers(fill.data);
+      setLoading(false);
+    } catch (error) {
+      console.log('Error get customer:' + error);
+      setLoading(false);
+    }
   };
 
-  const handleToggleActive = (customerId) => {
-    setCustomers(customers.map((customer) =>
-      customer.id === customerId ? { ...customer, active: !customer.active } : customer
-    ));
-    toast.success('Customer status updated');
+  const handleDelete = async (customerId) => {
+    try {
+      await request({
+        method: 'DELETE',
+        path: `customers/${customerId}`
+      });
+      setCustomers(customers.filter((customer) => customer.id !== customerId));
+      toast.success('Customer deleted successfully');
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast.error('Failed to delete customer');
+    }
+  };
+
+  const confirmDelete = (id) => {
+    confirmAlert({
+      title: 'Xác nhận xóa',
+      message: 'Bạn có chắc muốn xóa không?',
+      buttons: [
+        {
+          label: 'Có',
+          onClick: () => handleDelete(id)
+        },
+        {
+          label: 'Không'
+        }
+      ]
+    });
+  };
+
+  const handleToggleActive = async (customerId) => {
+    const customer = customers.find((c) => c.id === customerId);
+    const updatedCustomer = { ...customer, activated: !customer.activated };
+
+    try {
+      await request({
+        method: 'PUT',
+        path: `customers/${customerId}`,
+        data: updatedCustomer
+      });
+      setCustomers(customers.map((customer) =>
+        customer.id === customerId ? updatedCustomer : customer
+      ));
+      toast.success('Customer status updated');
+    } catch (error) {
+      console.error('Error updating customer status:', error);
+      toast.error('Failed to update customer status');
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -31,19 +86,26 @@ const Customer = () => {
     customer.phoneNumber.includes(search)
   );
 
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
   return (
     <Container fluid style={{ background: '#f7f4f4', height: '100vh' }}>
       <Toaster />
       <Row className="my-4">
         <Col>
           <h2 className="mb-4">Quản Lý Khách Hàng</h2>
-          <Form.Control
-            type="text"
-            placeholder="Tìm kiếm theo số điện thoại..."
-            value={search}
-            onChange={handleSearchChange}
-            className="mb-4"
-          />
+          <Form inline className="mb-4">
+            <Form.Control
+              type="text"
+              placeholder="Tìm kiếm theo số điện thoại..."
+              value={search}
+              onChange={handleSearchChange}
+              className="mr-sm-2"
+            />
+
+          </Form>
         </Col>
       </Row>
       <Row>
@@ -57,7 +119,6 @@ const Customer = () => {
                     <th>Họ Tên</th>
                     <th>Số Điện Thoại</th>
                     <th>Email</th>
-                    <th>Địa Chỉ</th>
                     <th>Hoạt Động</th>
                     <th>Hành Động</th>
                   </tr>
@@ -69,16 +130,15 @@ const Customer = () => {
                       <td>{customer.fullName}</td>
                       <td>{customer.phoneNumber}</td>
                       <td>{customer.email}</td>
-                      <td>{customer.address}</td>
                       <td>
                         <Form.Check
                           type="checkbox"
-                          checked={customer.active}
+                          checked={customer.activated}
                           onChange={() => handleToggleActive(customer.id)}
                         />
                       </td>
                       <td>
-                        <Button variant="danger" size="sm" onClick={() => handleDelete(customer.id)}>
+                        <Button variant="danger" size="sm" onClick={() => confirmDelete(customer.id)}>
                           <FaTrash /> Xóa
                         </Button>
                       </td>

@@ -71,7 +71,7 @@ const DishList = () => {
         <Container className="mt-4">
             <Row className="align-items-center mb-4">
                 <Col>
-                    <h2 className="text-left">Danh sách món ăn</h2>
+                    <h2>Danh sách món ăn</h2>
                 </Col>
             </Row>
             <Row>

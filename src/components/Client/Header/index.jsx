@@ -104,12 +104,11 @@ const Header = () => {
         <div>
             <Toaster />
             <Navbar expand="lg" className="bg-body-tertiary border-0" style={{ background: '#f7f7f7', padding: '12px', borderBottom: '1px solid #ccc' }}>
-                <Container>
+                <Container className='d-flex flex-column'>
                     {/* Navbar Toggle Button for Mobile */}
                     <Navbar.Toggle aria-controls="navbarScroll" />
-
                     {/* Navbar Collapse for Menu Items */}
-                    <Navbar.Collapse id="navbarScroll" className="justify-content-between">
+                    <Navbar.Collapse id="navbarScroll" className="justify-content-between w-100 mb-2">
                         <Navbar.Brand href="/home">LOGO</Navbar.Brand>
 
                         {/* Search Form */}
@@ -206,6 +205,34 @@ const Header = () => {
                             </NavDropdown>
                         </Nav>
                     </Navbar.Collapse>
+                    {/* Bottom Navbar */}
+                    <Navbar style={{
+                        width: '100%'
+                    }}>
+                        <Nav className="w-100 d-flex justify-content-between align-items-center">
+                            <Nav.Item>
+                                <Nav.Link href="/dish-list" style={{
+                                    fontWeight: '500'
+                                }}>
+                                    Danh sách món ăn
+                                </Nav.Link>
+                            </Nav.Item>
+                            <div style={{ display: 'flex' }}>
+                                <Nav.Link href="/home" style={{ margin: '0 8px' }}>
+                                    Trang chủ
+                                </Nav.Link>
+                                <Nav.Link href="/about-us" style={{ margin: '0 8px' }}>
+                                    Giới thiệu
+                                </Nav.Link>
+                                <Nav.Link href="/news" style={{ margin: '0 8px' }}>
+                                    Tin tức
+                                </Nav.Link>
+                                <Nav.Link href="/book-table" className="book-table-link">
+                                    Đặt bàn nhanh
+                                </Nav.Link>
+                            </div>
+                        </Nav>
+                    </Navbar>
                 </Container>
             </Navbar>
         </div>
