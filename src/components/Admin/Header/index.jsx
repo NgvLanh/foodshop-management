@@ -7,7 +7,7 @@ const Header = () => {
     return (
         <Navbar bg="light" expand="lg" className="header px-4">
             <Navbar.Brand href="" className="d-flex align-items-center">
-                <Dropdown alignRight>
+                <Dropdown>
                     <Dropdown.Toggle variant="light" id="dropdown-notifications" className="custom-dropdown-toggle">
                         <LuBellRing size={24} />
                     </Dropdown.Toggle>
@@ -18,7 +18,7 @@ const Header = () => {
                 </Dropdown>
             </Navbar.Brand>
 
-            <Form inline className="mx-auto search-container">
+            <Form className="mx-auto search-container">
                 <FormControl
                     type="text"
                     placeholder="Tìm kiếm..."

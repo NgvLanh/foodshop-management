@@ -39,7 +39,6 @@ const Dish = () => {
     const handlePayment = (tableId) => {
         const table = tables.find(table => table.id === tableId);
         const totalAmount = table.orders.reduce((total, order) => total + (order.price || 0), 0);
-
         // In hóa đơn (Có thể thay thế bằng chức năng khác tùy theo yêu cầu)
         console.log(`Hóa đơn cho bàn số ${tableId}:`);
         console.log(`Tổng cộng: ${totalAmount} VND`);

@@ -61,6 +61,7 @@ const router = createBrowserRouter(
 
       {/* Đường dẫn cho admin */}
       <Route path="/admin" element={<Admin />}>
+        <Route index element={<Dashboard />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="menu" element={<Menu />} />
         <Route path="category" element={<Category />} />

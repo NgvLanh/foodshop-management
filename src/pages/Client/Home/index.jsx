@@ -32,7 +32,7 @@ const Home = () => {
                     dishes.slice(0, 3).reverse().map((dish) => (
                         <Carousel.Item key={dish.id} className="carousel-item-overlay">
                             <img
-                                src={`src/assets/images/${dish.image}`}
+                                src={`assets/images/${dish.image}`}
                                 alt={`${dish.name}`}
                                 style={{
                                     width: '100%',
@@ -72,7 +72,7 @@ const Home = () => {
                         <div className="hover-card">
                             <Card className="card-hover">
                                 <div className="hover-card-image-container">
-                                    <Card.Img src={`src/assets/images/${dish.image}`} />
+                                    <Card.Img src={`assets/images/${dish.image}`} />
                                     <div className="hover-card-overlay">
                                         <Card.Body className="hover-card-body">
                                             <Card.Title>{dish.name}</Card.Title>

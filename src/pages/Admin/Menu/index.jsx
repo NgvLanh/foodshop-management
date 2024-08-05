@@ -1,27 +1,51 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Form, Table, Modal, Image } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Table, Modal, Image, Pagination } from 'react-bootstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
 import { useDropzone } from 'react-dropzone';
+import request from '../../../config/apiConfig';
 import toast, { Toaster } from 'react-hot-toast';
+import { confirmAlert } from 'react-confirm-alert';
 
 const Menu = () => {
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
   const [showModal, setShowModal] = useState(false);
   const [currentDish, setCurrentDish] = useState(null);
-  const [dishes, setDishes] = useState([
-    { id: 1, name: 'Món 1', description: 'Mô tả món 1', purchasePrice: 30000, salePrice: 50000, category: 'Category 1', image: '/path/to/image1.jpg', status: true },
-    { id: 2, name: 'Món 2', description: 'Mô tả món 2', purchasePrice: 50000, salePrice: 75000, category: 'Category 2', image: '/path/to/image2.jpg', status: false },
-  ]);
-  const [categories, setCategories] = useState([
-    { id: 1, name: 'Category 1' },
-    { id: 2, name: 'Category 2' },
-  ]);
+  const [dishes, setDishes] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [uploadedImage, setUploadedImage] = useState('');
+  const [file, setFile] = useState(null);
+  const [imageFileName, setImageFileName] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 5;
 
   useEffect(() => {
-    // Fetch categories from the server or use local data
+    fetchCategoryData();
+    fetchDishData();
   }, []);
+
+  const fetchCategoryData = async () => {
+    try {
+      const res = await request({
+        path: 'categories'
+      })
+      setCategories(res.data);
+    } catch (error) {
+      alert(error)
+    }
+  }
+
+  const fetchDishData = async () => {
+    try {
+      const res = await request({
+        path: 'dishes'
+      })
+      setDishes(res.data);
+    } catch (error) {
+      alert(error)
+    }
+  }
 
   const handleShowModal = (dish = null) => {
     setCurrentDish(dish);
@@ -29,75 +53,155 @@ const Menu = () => {
       // Set values for editing
       setValue('name', dish.name);
       setValue('description', dish.description);
-      setValue('purchasePrice', dish.purchasePrice);
+      setValue('price', dish.price);
       setValue('salePrice', dish.salePrice);
-      setValue('category', dish.category);
-      setValue('status', dish.status);
+      setValue('category', dish.category?.id);
       setUploadedImage(dish.image);
+      setImageFileName(dish.image);
     } else {
       // Reset form for adding new dish
       reset();
+      setImageFileName('');
       setUploadedImage('');
-      setValue('status', true);
     }
     setShowModal(true);
   };
 
   const handleCloseModal = () => setShowModal(false);
 
-  const onSubmit = (data) => {
-    if (parseFloat(data.salePrice) <= parseFloat(data.purchasePrice)) {
+  const handleStatusChange = async (dish, status) => {
+    dish.status = status;
+    try {
+      const res = await request({
+        method: 'PUT',
+        path: `dishes/${dish.id}`,
+        data: dish,
+      });
+      fetchDishData();
+      if (res.success) {
+        toast.success('Món đã được cập nhật!');
+      }
+
+    } catch (error) {
+      alert(error)
+    }
+  };
+
+  const onSubmit = async (data) => {
+    if (parseFloat(data.salePrice) <= parseFloat(data.price)) {
       toast.error('Giá bán phải lớn hơn giá nhập.');
       return;
     }
 
+    const category = categories.find(c => c.id === parseInt(data.category));
+
+    if (category) {
+      data.category = category;
+    }
+
     const newDish = {
-      id: currentDish ? currentDish.id : Date.now(),
       ...data,
-      image: uploadedImage,
+      image: imageFileName,
       status: true
     };
 
     if (currentDish) {
-      // Update existing dish
-      setDishes(dishes.map(dish =>
-        dish.id === currentDish.id ? newDish : dish
-      ));
-      toast.success('Món đã được cập nhật!');
+      // Update dish
+      try {
+        const res = await request({
+          method: 'PUT',
+          path: `dishes/${currentDish.id}`,
+          data: newDish,
+        });
+        fetchDishData();
+        if (res.success) {
+          toast.success('Món đã được cập nhật!');
+        }
+
+      } catch (error) {
+        alert(error)
+      }
     } else {
       // Add new dish
-      setDishes([...dishes, newDish]);
-      toast.success('Món đã được thêm!');
-    }
+      try {
+        const res = await request({
+          method: 'POST',
+          path: 'dishes',
+          data: newDish,
+        });
 
+        const formData = new FormData();
+        formData.append('image', file);
+        const res_up = await request({
+          method: 'POST',
+          path: 'dishes/uploads',
+          data: formData,
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        fetchDishData();
+        if (res.success) {
+          toast.success('Món đã được thêm!');
+        }
+      } catch (error) {
+        alert(error)
+      }
+    }
     handleCloseModal();
   };
-
-  const handleDeleteDish = (id) => {
+  const handleDeleteDish = async (id) => {
+    try {
+      await request({
+        method: 'DELETE',
+        path: `dishes/${id}`,
+      })
+    } catch (error) {
+      alert(error)
+    }
     setDishes(dishes.filter(dish => dish.id !== id));
     toast.success('Món đã được xóa!');
   };
 
+  const confirmDelete = (id) => {
+    confirmAlert({
+      title: 'Xác nhận xóa',
+      message: 'Bạn có chắc chắn muốn xóa món ăn này không?',
+      buttons: [
+        {
+          label: 'Có',
+          onClick: () => handleDeleteDish(id)
+        },
+        {
+          label: 'Không'
+        }
+      ]
+    });
+  };
+
   const handleDrop = (acceptedFiles) => {
-    const file = acceptedFiles[0];
     const reader = new FileReader();
     reader.onloadend = () => {
       setUploadedImage(reader.result);
+      setFile(acceptedFiles[0]);
+      setImageFileName(acceptedFiles[0].name);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(acceptedFiles[0]);
   };
 
   const { getRootProps, getInputProps } = useDropzone({ onDrop: handleDrop });
 
-  const handleStatusChange = (id, status) => {
-    setDishes(dishes.map(dish =>
-      dish.id === id ? { ...dish, status } : dish
-    ));
-  };
+
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentDishes = dishes?.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(dishes?.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <Container fluid style={{ background: '#f7f4f4', height: '100vh' }}>
-      <Toaster/>
+      <Toaster />
       <Row className="my-4">
         <Col>
           <h2 className="mb-4">Quản Lý Thực Đơn</h2>
@@ -123,25 +227,25 @@ const Menu = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {dishes.map(dish => (
+                  {currentDishes?.map(dish => (
                     <tr key={dish.id}>
-                      <td><Image src={dish.image} thumbnail style={{ width: '100px' }} /></td>
+                      <td><Image src={`/assets/images/${dish.image}`} thumbnail style={{ width: '100px', height: '80px' }} /></td>
                       <td>{dish.name}</td>
-                      <td>{dish.purchasePrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
+                      <td>{dish.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
                       <td>{dish.salePrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
-                      <td>{dish.category}</td>
+                      <td>{dish.category?.name}</td>
                       <td>
                         <Form.Check
                           type="checkbox"
                           checked={dish.status}
-                          onChange={(e) => handleStatusChange(dish.id, e.target.checked)}
+                          onChange={(e) => handleStatusChange(dish, e.target.checked)}
                         />
                       </td>
                       <td>
                         <Button variant="warning" size="sm" onClick={() => handleShowModal(dish)}>
                           <FaEdit /> Chỉnh Sửa
                         </Button>{' '}
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteDish(dish.id)}>
+                        <Button variant="danger" size="sm" onClick={() => confirmDelete(dish.id)}>
                           <FaTrash /> Xóa
                         </Button>
                       </td>
@@ -149,6 +253,17 @@ const Menu = () => {
                   ))}
                 </tbody>
               </Table>
+              <Pagination className='d-flex justify-content-center'>
+                {[...Array(totalPages)]?.map((_, idx) => (
+                  <Pagination.Item
+                    key={idx + 1}
+                    active={idx + 1 === currentPage}
+                    onClick={() => handlePageChange(idx + 1)}
+                  >
+                    {idx + 1}
+                  </Pagination.Item>
+                ))}
+              </Pagination>
             </Card.Body>
           </Card>
         </Col>
@@ -184,12 +299,12 @@ const Menu = () => {
             <Form.Floating className="mb-3">
               <Form.Control
                 type="number"
-                id="dishPurchasePrice"
+                id="dishprice"
                 placeholder="Giá nhập"
-                {...register('purchasePrice', { required: 'Giá nhập không được để trống', valueAsNumber: true })}
+                {...register('price', { required: 'Giá nhập không được để trống', valueAsNumber: true })}
               />
-              <Form.Label htmlFor="dishPurchasePrice">Giá Nhập</Form.Label>
-              {errors.purchasePrice && <Form.Text className="text-danger">{errors.purchasePrice.message}</Form.Text>}
+              <Form.Label htmlFor="dishprice">Giá Nhập</Form.Label>
+              {errors.price && <Form.Text className="text-danger">{errors.price.message}</Form.Text>}
             </Form.Floating>
             <Form.Floating className="mb-3">
               <Form.Control
@@ -202,30 +317,30 @@ const Menu = () => {
               {errors.salePrice && <Form.Text className="text-danger">{errors.salePrice.message}</Form.Text>}
             </Form.Floating>
             <Form.Floating className="mb-3">
-              <Form.Control as="select" id="dishCategory" {...register('category', { required: 'Danh mục không được để trống' })}>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+              <Form.Select
+                id="dishCategory"
+                {...register('category', { required: 'Danh mục không được để trống' })}
+              >
+                <option value="">Chọn danh mục</option>
+                {categories?.map(category => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
                 ))}
-              </Form.Control>
+              </Form.Select>
               <Form.Label htmlFor="dishCategory">Danh Mục</Form.Label>
               {errors.category && <Form.Text className="text-danger">{errors.category.message}</Form.Text>}
             </Form.Floating>
             <Form.Group className="mb-3">
               <Form.Label>Hình Ảnh</Form.Label>
-              <div {...getRootProps({ className: 'dropzone border p-3 mb-3 rounded' })}>
+              <div {...getRootProps({ className: 'dropzone border p-3 mb-3 rounded text-center' })}>
                 <input {...getInputProps()} />
                 <p>Kéo thả hình ảnh vào đây, hoặc nhấp để chọn tệp</p>
-                {uploadedImage && <Image src={uploadedImage} thumbnail style={{ width: '150px' }} />}
+                {currentDish ? <Image src={`/assets/images/${uploadedImage}`} thumbnail style={{ width: '150px' }} />
+                  : <Image src={`${uploadedImage}`} thumbnail style={{ width: '150px' }} />}
               </div>
             </Form.Group>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={handleCloseModal}>
-                Đóng
-              </Button>
-              <Button variant="primary" type="submit">
-                Lưu
-              </Button>
-            </Modal.Footer>
+            <Button variant="primary" type="submit">
+              {currentDish ? 'Cập Nhật' : 'Thêm'}
+            </Button>
           </Form>
         </Modal.Body>
       </Modal>
