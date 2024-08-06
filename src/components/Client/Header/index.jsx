@@ -4,67 +4,40 @@ import './style.css';
 import { MdFileDownloadDone } from 'react-icons/md';
 import toast, { Toaster } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import request from '../../../config/apiConfig';
 
-// Array các văn bản để đổi placeholder
-const placeholderTexts = [
-    "Bò nướng",
-    "Bánh xèo",
-    "Gà rán",
-    "Cơm tấm",
-    "Phở bò"
-];
-
-// Updated suggestions with image and price
-const suggestions = [
-    { name: "Táo", price: 30_000, image: "https://via.placeholder.com/50?text=Táo" },
-    { name: "Chuối", price: 20_000, image: "https://via.placeholder.com/50?text=Chuối" },
-    { name: "Cam", price: 25_000, image: "https://via.placeholder.com/50?text=Cam" },
-    { name: "Xoài", price: 35_000, image: "https://via.placeholder.com/50?text=Xoài" },
-    { name: "Dứa", price: 40_000, image: "https://via.placeholder.com/50?text=Dứa" },
-    { name: "Dâu tây", price: 35_000, image: "https://via.placeholder.com/50?text=Dâu+tây" },
-    { name: "Việt quất", price: 50_000, image: "https://via.placeholder.com/50?text=Việt+quất" },
-];
-
-// Dữ liệu giả cho giỏ hàng
-const initialCartItems = [
-    { name: "Táo", price: 30_000, quantity: 2, image: "https://via.placeholder.com/50?text=Táo" },
-    { name: "Chuối", price: 20_000, quantity: 1, image: "https://via.placeholder.com/50?text=Chuối" },
-    { name: "Cam", price: 25_000, quantity: 4, image: "https://via.placeholder.com/50?text=Cam" },
-];
+const initialCartItems = JSON.parse(localStorage.getItem('tempCartItem')) || [];
 
 const Header = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredSuggestions, setFilteredSuggestions] = useState([]);
-    const [cartItems, setCartItems] = useState(initialCartItems); // Using sample cart data
+    const [dishes, setDishes] = useState([]);
+    const [cartItems, setCartItems] = useState(initialCartItems);
 
     useEffect(() => {
-        const searchInput = document.getElementById("search");
-        let index = 0;
-
-        const changePlaceholder = () => {
-            searchInput.placeholder = placeholderTexts[index];
-            index = (index + 1) % placeholderTexts.length;
-        };
-
-        changePlaceholder();
-        const interval = setInterval(changePlaceholder, 4000); // Thay đổi mỗi 4 giây
-
-        return () => clearInterval(interval); // Dọn dẹp khi component bị hủy
+        fetchDataDishes();
     }, []);
 
-    // Calculate the total price of items in the cart
+    const fetchDataDishes = async () => {
+        try {
+            const res = await request({ path: 'dishes' });
+            setDishes(res.data);
+        } catch (error) {
+            alert(error)
+        }
+    };
+
     const calculateTotal = () => {
         return cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toLocaleString('vi-VN');
     };
 
-    // Handle input change in the search field
     const handleInputChange = (event) => {
         const value = event.target.value;
         setSearchTerm(value);
 
         if (value) {
-            const filtered = suggestions.filter(suggestion =>
-                suggestion.name.toLowerCase().includes(value.toLowerCase())
+            const filtered = dishes.filter(dish =>
+                dish.name.toLowerCase().includes(value.toLowerCase())
             );
             setFilteredSuggestions(filtered);
         } else {
@@ -72,32 +45,56 @@ const Header = () => {
         }
     };
 
-    // Handle clicking on a suggestion
     const handleSuggestionClick = (suggestion) => {
         setSearchTerm(suggestion.name);
         setFilteredSuggestions([]);
     };
 
-    // Handle adding item to the cart
     const handleAddToCart = (item) => {
-        setCartItems([...cartItems, { ...item, quantity: 1 }]);
+        const token = localStorage.getItem('token');
+        if (!token) {
+            const existingItemIndex = cartItems.findIndex(cartItem => cartItem.name === item.name);
+            let updatedCartItems;
+
+            if (existingItemIndex !== -1) {
+                updatedCartItems = [...cartItems];
+                updatedCartItems[existingItemIndex].quantity += 1;
+            } else {
+                updatedCartItems = [...cartItems, { ...item, quantity: 1 }];
+            }
+
+            localStorage.setItem('tempCartItem', JSON.stringify(updatedCartItems));
+            setCartItems(updatedCartItems);
+        } else {
+            console.log(token);
+        }
         toast.success(`Thêm ${item.name} vào giỏ hàng thành công.`);
-        setFilteredSuggestions([]);
+        setTimeout(() => { window.location.reload(); }, 500);
     };
 
-    // Remove item from the cart
     const handleRemoveItem = (index) => {
-        const removedItem = cartItems[index];
-        setCartItems(cartItems.filter((_, i) => i !== index));
+        const currentCartItems = JSON.parse(localStorage.getItem('tempCartItem')) || [];
+        const removedItem = currentCartItems[index];
+        const updatedCartItems = currentCartItems.filter((_, i) => i !== index);
+
+        localStorage.setItem('tempCartItem', JSON.stringify(updatedCartItems));
+        setCartItems(updatedCartItems);
         toast.success(`Đã xóa ${removedItem.name} khỏi giỏ hàng.`);
     };
 
-    // Update item quantity in the cart
-    const handleQuantityChange = (index, newQuantity) => {
-        const updatedCartItems = [...cartItems];
-        updatedCartItems[index].quantity = Math.max(1, Number(newQuantity));
+    const handleQuantityChange = (item, newQuantity) => {
+        const existingItemIndex = cartItems.findIndex(cartItem => cartItem.name === item.name);
+        let updatedCartItems;
+        if (existingItemIndex !== -1) {
+            updatedCartItems = [...cartItems];
+            updatedCartItems[existingItemIndex].quantity = newQuantity;
+        } else {
+            updatedCartItems = [...cartItems, { ...item, quantity: 1 }];
+        }
+
+        localStorage.setItem('tempCartItem', JSON.stringify(updatedCartItems));
         setCartItems(updatedCartItems);
-        toast.success(`Số lượng ${updatedCartItems[index].name} đã được cập nhật.`);
+        toast.success(`Số lượng ${item.name} đã được cập nhật.`);
     };
 
     return (
@@ -105,13 +102,9 @@ const Header = () => {
             <Toaster />
             <Navbar expand="lg" className="bg-body-tertiary border-0" style={{ background: '#f7f7f7', padding: '12px', borderBottom: '1px solid #ccc' }}>
                 <Container className='d-flex flex-column'>
-                    {/* Navbar Toggle Button for Mobile */}
                     <Navbar.Toggle aria-controls="navbarScroll" />
-                    {/* Navbar Collapse for Menu Items */}
                     <Navbar.Collapse id="navbarScroll" className="justify-content-between w-100 mb-2">
                         <Navbar.Brand href="/home">LOGO</Navbar.Brand>
-
-                        {/* Search Form */}
                         <div className="input-header-bar d-flex flex-grow-1 mx-3 position-relative">
                             <Form.Control
                                 id="search"
@@ -132,7 +125,7 @@ const Header = () => {
                                             onClick={() => handleSuggestionClick(suggestion)}
                                         >
                                             <div className='d-flex align-items-center p-2'>
-                                                <img src={suggestion.image} alt={suggestion.name} className="suggestion-item-image" />
+                                                <img src={`/assets/images/${suggestion.image}`} alt={suggestion.name} style={{ height: '70px', width: '100px' }} />
                                                 <div className="suggestion-item-details ms-2">
                                                     <div className="suggestion-item-name">{suggestion.name}</div>
                                                     <div className="suggestion-item-price">{suggestion.price.toLocaleString('vi-VN')} VND</div>
@@ -150,8 +143,6 @@ const Header = () => {
                                 </ul>
                             )}
                         </div>
-
-                        {/* Navigation Links */}
                         <Nav className="my-2 my-lg-0 d-flex gap-2" style={{ maxHeight: '100px' }} navbarScroll>
                             <NavDropdown title={
                                 <span>
@@ -161,13 +152,13 @@ const Header = () => {
                                     </Badge>
                                 </span>
                             }>
-                                {cartItems.length === 0 ? (
+                                {cartItems?.length === 0 ? (
                                     <div className="navbar-cart-empty text-center px-2">Không có món ăn nào</div>
                                 ) : (
                                     <div className="navbar-cart-items">
-                                        {cartItems.map((item, index) => (
+                                        {cartItems?.map((item, index) => (
                                             <div key={index} className="cart-item d-flex align-items-center p-2">
-                                                <img src={item.image} alt={item.name} className="cart-item-image" />
+                                                <img src={`/assets/images/${item.image}`} alt={item.name} className="cart-item-image" />
                                                 <div className="cart-item-details flex-grow-1 ms-2">
                                                     <div className="cart-item-name">{item.name}</div>
                                                     <div className="cart-item-info d-flex align-items-center">
@@ -176,7 +167,7 @@ const Header = () => {
                                                             min="1"
                                                             value={item.quantity}
                                                             className="cart-item-quantity"
-                                                            onChange={(e) => handleQuantityChange(index, e.target.value)}
+                                                            onChange={(e) => handleQuantityChange(item, e.target.value)}
                                                         />
                                                         <span className="mx-2">x</span>
                                                         <span>{item.price.toLocaleString('vi-VN')}</span>
@@ -205,7 +196,6 @@ const Header = () => {
                             </NavDropdown>
                         </Nav>
                     </Navbar.Collapse>
-                    {/* Bottom Navbar */}
                     <Navbar style={{
                         width: '100%'
                     }}>

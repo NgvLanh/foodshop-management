@@ -3,6 +3,8 @@ import { BsCurrencyDollar, BsFillCartCheckFill, BsGraphUpArrow, BsPiggyBank } fr
 import { Link } from "react-router-dom";
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { useEffect, useState } from "react";
+import request from "../../../config/apiConfig";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -48,7 +50,27 @@ const revenueData = [
     { invoice: 'Hóa Đơn 005', revenue: '2,700,000 VND' },
 ];
 
+
+
 const Dashboard = () => {
+
+    const [invoices, setInvoices] = useState([]);
+
+    useEffect(() => {
+        fetchDataInvoice();
+    }, []);
+
+    const fetchDataInvoice = () => {
+        try {
+            const res = request({
+                path: 'invoices'
+            })
+            setInvoices(res.data);
+        } catch (error) {
+            alert(error)
+        }
+    }
+    
     return (
         <div className="bg-light w-100">
             <Container fluid style={{ padding: "10px 10px 10px 30px", background: "#f7f4f4", height: '100vh', borderTopLeftRadius: "10px" }}>
@@ -122,14 +144,16 @@ const Dashboard = () => {
                                     <thead>
                                         <tr>
                                             <th>Hóa Đơn</th>
+                                            <th>Ngày</th>
                                             <th>Doanh Thu</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {revenueData.map((item, index) => (
-                                            <tr key={index}>
-                                                <td>{item.invoice}</td>
-                                                <td>{item.revenue}</td>
+                                        {invoices?.map((invoice) => (
+                                            <tr key={invoice.id}>
+                                                <td>{invoice.id}</td>
+                                                <td>{invoice.paymentDate}</td>
+                                                <td>{invoice.total}</td>
                                             </tr>
                                         ))}
                                     </tbody>

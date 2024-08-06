@@ -7,7 +7,7 @@
 }
 
 .suggestions-list {
-    max-height: 200px;
+    max-height: 300px;
     overflow-y: auto;
     width: 94.5%;
     border-radius: 0 0 20px 20px;

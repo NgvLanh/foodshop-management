@@ -27,7 +27,7 @@ const Sidebar = () => {
         >
             <Nav className="flex-column">
                 <div className="logo">
-                    <img src="/src/assets/images/profile.png" alt="Logo" className="logo-img" />
+                    <img src="/assets/images/profile.png" alt="Logo" className="logo-img" />
                     <h6>Quản lý</h6>
                 </div>
                 <Nav.Item>

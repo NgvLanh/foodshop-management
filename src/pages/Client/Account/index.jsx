@@ -21,7 +21,7 @@ const Account = () => {
         try {
             const res = await loginApi(data);
             console.log(res.data);
-            
+
             if (res.success) {
                 setCookie('token', JSON.stringify(res.data.token))
                 localStorage.setItem('token', JSON.stringify(res.data.token));
@@ -45,7 +45,8 @@ const Account = () => {
             });
 
             if (res.success) {
-                toast.success('Đăng ký thành công.');
+                await toast.success('Đăng ký thành công.');
+                navigate('/account');
             } else {
                 toast.error(res.message);
             }

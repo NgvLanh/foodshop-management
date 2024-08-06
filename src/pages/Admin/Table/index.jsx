@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Container, Row, Col, Button, Modal, Form, InputGroup, FormControl } from 'react-bootstrap';
 import toast, { Toaster } from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
 import Table from '../../../components/Admin/Table';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import request from '../../../config/apiConfig';
+import { confirmAlert } from 'react-confirm-alert';
 
 const TableManagement = () => {
     const [tables, setTables] = useState([
@@ -17,17 +19,83 @@ const TableManagement = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm();
+    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
 
-    const handleAddTable = (data) => {
-        setTables([
-            ...tables,
-            { id: Date.now(), number: data.number, seats: parseInt(data.seats), isOccupied: false, createdAt: new Date().toISOString(), availableUntil: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString() },
-        ]);
-        setShowModal(false);
-        toast.success('Đã thêm bàn mới!');
-        reset(); // Reset form fields after submission
+    useEffect(() => {
+        fetchTables();
+    }, []);
+
+    const fetchTables = async () => {
+        try {
+            const res = await request({ path: 'tables' });
+            setTables(res.data);
+        } catch (error) {
+            console.error('Error fetching tables:', error);
+        }
+    };
+
+    const handleAddTable = async (data) => {
+        if (tables.some(table => table.number === parseInt(data.number))) {
+            toast.error('Số bàn đã tồn tại!');
+            return;
+        }
+        const newTable = {
+            number: data.number,
+            seats: parseInt(data.seats),
+            isOccupied: false,
+        };
+
+        try {
+            await request({
+                method: 'POST',
+                path: 'tables',
+                data: newTable
+            });
+            toast.success('Thêm bàn thành công!');
+            fetchTables();
+            reset();
+            setShowModal(false);
+        } catch (error) {
+            console.error('Error adding table:', error);
+        }
+    };
+
+    const handleEditTable = async (data) => {
+        if (tables.some(table => table.number === parseInt(data.number) && table.id !== selectedTable.id)) {
+            toast.error('Số bàn đã tồn tại!');
+            return;
+        }
+        const updatedTable = {
+            number: data.number,
+            seats: parseInt(data.seats),
+            isOccupied: selectedTable.isOccupied,
+        };
+
+        try {
+            await request({
+                method: 'PUT',
+                path: `tables/${selectedTable.id}`,
+                data: updatedTable
+            });
+            toast.success('Cập nhật bàn thành công!');
+            fetchTables();
+            reset();
+            setShowModal(false);
+            setIsEditing(false);
+            setSelectedTable(null);
+        } catch (error) {
+            console.error('Error updating table:', error);
+        }
+    };
+
+    const handleEdit = (table) => {
+        setValue('number', table.number);
+        setValue('seats', table.seats);
+        setIsEditing(true);
+        setSelectedTable(table);
+        setShowModal(true);
     };
 
     const handleTableClick = (id) => {
@@ -35,12 +103,38 @@ const TableManagement = () => {
         setSelectedTable(table);
     };
 
-    const handleDeleteTable = () => {
-        setTables(tables.filter(table => table.id !== selectedTable.id));
-        setShowDeleteModal(false);
-        toast.success('Đã xóa bàn!');
+    const handleDeleteTable = async () => {
+        try {
+            await request({ method: 'DELETE', path: `tables/${selectedTable.id}` });
+            fetchTables();
+            toast.success('Đã xóa bàn!');
+            setShowDeleteModal(false);
+            setSelectedTable(null);
+        } catch (error) {
+            console.error('Error deleting table:', error);
+        }
+    };
+
+    const confirmDelete = (id) => {
+        setSelectedTable(null);
+        confirmAlert({
+            title: 'Xác nhận xóa',
+            message: 'Bạn có chắc chắn muốn xóa bàn này không?',
+            buttons: [
+                { label: 'Có', onClick: () => handleDeleteTable(id) },
+                { label: 'Không' }
+            ]
+        });
+    };
+
+    const handleShowModal = () => {
+        reset();
+        setShowModal(true);
+        setIsEditing(false);
         setSelectedTable(null);
     };
+
+    const handleCloseModal = () => setShowModal(false);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -64,38 +158,39 @@ const TableManagement = () => {
                             onChange={handleSearch}
                         />
                     </InputGroup>
-                    <Button variant="primary" onClick={() => setShowModal(true)}>
+                    <Button variant="primary" onClick={handleShowModal}>
                         <FaPlus /> Thêm Bàn
                     </Button>
                 </Col>
             </Row>
             <Row>
-                {filteredTables.map(table => (
+                {filteredTables.map((table) => (
                     <Col key={table.id} sm={6} md={4} lg={3}>
                         <Table
                             id={table.id}
                             number={table.number}
                             seats={table.seats}
                             isOccupied={table.isOccupied}
-                            onClick={handleTableClick}
+                            onClick={() => handleTableClick(table.id)}
                         />
+
                     </Col>
                 ))}
             </Row>
 
-            {/* Modal for adding new table */}
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
+            {/* Modal for adding/editing table */}
+            <Modal show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Thêm Bàn Mới</Modal.Title>
+                    <Modal.Title>{isEditing ? 'Cập Nhật Bàn' : 'Thêm Bàn Mới'}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Form onSubmit={handleSubmit(handleAddTable)}>
-                        <Form.Group className="mb-3">
+                    <Form onSubmit={handleSubmit(isEditing ? handleEditTable : handleAddTable)}>
+                        <Form.Group className="mb-2">
                             <Form.Label>Số Bàn</Form.Label>
                             <Form.Control
                                 type="number"
                                 placeholder="Nhập số bàn"
-                                {...register('number', { required: 'Số bàn là bắt buộc' })}
+                                {...register('number', { required: 'Số bàn là bắt buộc', min: { value: 1, message: 'Số bàn phải lớn hơn 0' } })}
                             />
                             {errors.number && <p className="text-danger">{errors.number.message}</p>}
                         </Form.Group>
@@ -104,16 +199,16 @@ const TableManagement = () => {
                             <Form.Control
                                 type="number"
                                 placeholder="Nhập số ghế"
-                                {...register('seats', { required: 'Số ghế là bắt buộc' })}
+                                {...register('seats', { required: 'Số ghế là bắt buộc', min: { value: 1, message: 'Số ghế phải lớn hơn 0' }, max: { value: 16, message: 'Số ghế phải nhỏ hơn 16' } })}
                             />
                             {errors.seats && <p className="text-danger">{errors.seats.message}</p>}
                         </Form.Group>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={handleCloseModal}>Đóng</Button>
+                            <Button type="submit" variant="primary">{isEditing ? 'Cập Nhật' : 'Thêm'}</Button>
+                        </Modal.Footer>
                     </Form>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>Đóng</Button>
-                    <Button type="submit" variant="primary">Thêm</Button>
-                </Modal.Footer>
             </Modal>
 
             {/* Modal for table details */}
@@ -126,28 +221,16 @@ const TableManagement = () => {
                         <p><strong>Số Bàn:</strong> {selectedTable.number}</p>
                         <p><strong>Số Ghế:</strong> {selectedTable.seats}</p>
                         <p><strong>Tình Trạng:</strong> {selectedTable.isOccupied ? 'Có người dùng' : 'Không có người dùng'}</p>
-                        <p><strong>Thời Gian Tạo:</strong> {new Date(selectedTable.createdAt).toLocaleString()}</p>
-                        <p><strong>Thời Gian Còn Trống:</strong> {new Date(selectedTable.availableUntil).toLocaleString()}</p>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="danger" onClick={() => setShowDeleteModal(true)}>Xóa Bàn</Button>
+                        <Button variant="warning" onClick={() => handleEdit(selectedTable)}>
+                            <FaEdit /> Sửa
+                        </Button>
+                        <Button variant="danger" onClick={() => confirmDelete(selectedTable.id)}>
+                            <FaTrash /> Xóa
+                        </Button>
                         <Button variant="secondary" onClick={() => setSelectedTable(null)}>Đóng</Button>
-                    </Modal.Footer>
-                </Modal>
-            )}
 
-            {/* Modal for deleting table */}
-            {selectedTable && (
-                <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Xác Nhận Xóa</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <p>Bạn có chắc chắn muốn xóa bàn số {selectedTable.number} không?</p>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Hủy</Button>
-                        <Button variant="danger" onClick={handleDeleteTable}>Xóa</Button>
                     </Modal.Footer>
                 </Modal>
             )}

@@ -17,6 +17,8 @@ const Client = () => {
 
     const getUser = async () => {
         const token = localStorage.getItem('token');
+        console.log(token);
+        
         if (token) {
             try {
                 const decodedToken = jwtDecode(token);

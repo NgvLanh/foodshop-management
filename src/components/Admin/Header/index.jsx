@@ -32,7 +32,7 @@ const Header = () => {
                     <Dropdown>
                         <Dropdown.Toggle variant="light" id="dropdown-profile" className="custom-dropdown-toggle">
                             <Image
-                                src="/src/assets/images/profile.png"
+                                src="/assets/images/profile.png"
                                 alt="Profile"
                                 roundedCircle
                                 className="profile-img"
