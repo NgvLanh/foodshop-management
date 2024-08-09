@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useCookies } from "react-cookie";
-import { getUser } from "../../../services/Auth";
+import { getMyInfo } from "../../../services/Auth";
 import { Navigate, Outlet } from "react-router-dom";
 import Header from "../../../components/Admin/Header";
 import Sidebar from "../../../components/Admin/SideBar";
@@ -14,7 +14,7 @@ const Admin = () => {
 
 
     const getUserInfo = async () => {
-        const res = await getUser();
+        const res = await getMyInfo();
         if (res?.role !== cookie?.role) {
             setCookie(res?.role);
         }

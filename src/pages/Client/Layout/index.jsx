@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { json, Outlet } from 'react-router-dom';
 import Header from '../../../components/Client/Header'
 import HeaderTop from '../../../components/Client/HeaderTop'
 import { Container } from 'react-bootstrap';
@@ -9,40 +9,11 @@ import request from '../../../config/apiConfig';
 import { jwtDecode } from 'jwt-decode';
 
 const Client = () => {
-    const [user, setUser] = useState({});
-
-    useEffect(() => {
-        getUser();
-    }, []);
-
-    const getUser = async () => {
-        const token = localStorage.getItem('token');
-        console.log(token);
-        
-        if (token) {
-            try {
-                const decodedToken = jwtDecode(token);
-                const userId = decodedToken.sub;
-                const res = await request({
-                    path: `customers/${userId}`
-                })
-                setUser(res.data);
-                console.log(user);
-
-            } catch (error) {
-                console.error('Error decoding token:', error);
-            }
-        } else {
-            console.log('No token found');
-        }
-
-    }
-
 
     return (
         <div>
             <Toaster />
-            <HeaderTop user={user} />
+            <HeaderTop />
             <Header />
             <div className='pt-2'>
                 <Container>

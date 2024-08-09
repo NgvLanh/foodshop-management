@@ -4,14 +4,14 @@ import { useForm } from 'react-hook-form';
 import toast, { Toaster } from 'react-hot-toast';
 import response from '../../../config/apiConfig'
 import { Navigate, useNavigate } from 'react-router-dom';
-import { loginApi } from '../../../services/Auth';
+import { getMyInfo, loginApi } from '../../../services/Auth';
 import { useCookies } from 'react-cookie';
 import request from '../../../config/apiConfig';
+import { jwtDecode } from 'jwt-decode';
 
 
 const Account = () => {
     const [cookies, setCookie, removeCookie] = useCookies(["token", "role"]);
-
     const navigate = useNavigate();
     const [key, setKey] = useState('login');
     const { register: login, handleSubmit: handleSubmitLogin, formState: { errors: errorsLogin } } = useForm();
@@ -19,15 +19,26 @@ const Account = () => {
 
     const onLoginSubmit = async (data) => {
         try {
-            const res = await loginApi(data);
-            console.log(res.data);
+            const res = await loginApi({
+                email: data.email,
+                password: data.password
+            })
 
-            if (res.success) {
-                setCookie('token', JSON.stringify(res.data.token))
-                localStorage.setItem('token', JSON.stringify(res.data.token));
-                await toast.success('Đăng nhập thành công.');
-                navigate('/home');
-                window.location.reload();
+            if (res.authenticated) {
+                toast.success('Đăng nhập thành công.');
+                setCookie('token', res.token);
+                try {
+                    const userInfo = await getMyInfo();
+                    const roles = userInfo.roles;
+                    console.log(roles);
+                    if (roles.includes('ADMIN')) {
+                        navigate('/admin');
+                    } else {
+                        navigate('/home');
+                    }
+                } catch (error) {
+                    alert(error);
+                }
             } else {
                 toast.error('Mật khẩu hoặc email không đúng.');
             }
@@ -40,13 +51,13 @@ const Account = () => {
         try {
             const res = await request({
                 method: 'POST',
-                path: 'customers',
+                path: 'users',
                 data: data
             });
-
-            if (res.success) {
-                await toast.success('Đăng ký thành công.');
-                navigate('/account');
+            
+            if (res) {
+                toast.success('Đăng ký thành công.');
+                setTimeout(() => { window.location.reload() }, 700);
             } else {
                 toast.error(res.message);
             }
@@ -69,7 +80,7 @@ const Account = () => {
                     <Row className="align-items-center">
                         <Col md={6}>
                             <img
-                                src="https://via.placeholder.com/500?text=Login+Illustration"
+                                src="/assets/images/login.webp"
                                 alt="Login Illustration"
                                 className="img-fluid p-4"
                             />
@@ -122,7 +133,7 @@ const Account = () => {
                     <Row className="align-items-center">
                         <Col md={6}>
                             <img
-                                src="https://via.placeholder.com/500?text=Register+Illustration"
+                                src="/assets/images/register.jpg"
                                 alt="Register Illustration"
                                 className="img-fluid p-4"
                             />

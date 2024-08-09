@@ -1,23 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Form, Table, Modal } from 'react-bootstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
 import toast, { Toaster } from 'react-hot-toast';
+import axios from 'axios';
+import request from '../../../config/apiConfig';
 
 const Reservation = () => {
     const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
     const [showModal, setShowModal] = useState(false);
     const [currentReservation, setCurrentReservation] = useState(null);
-    const [reservations, setReservations] = useState([
-        { id: 1, tableNumber: 1, reservationTime: '2024-08-01T19:00', status: 'Chưa xác nhận', customerPhone: '0901234567' },
-        { id: 2, tableNumber: 2, reservationTime: '2024-08-02T20:00', status: 'Đã xác nhận', customerPhone: '0912345678' },
-    ]);
-    const [tables, setTables] = useState([
-        { id: 1, number: 1, seats: 4 },
-        { id: 2, number: 2, seats: 2 },
-        { id: 3, number: 3, seats: 6 },
-        { id: 4, number: 4, seats: 4 },
-    ]);
+    const [reservations, setReservations] = useState([]);
+    const [tables, setTables] = useState([]);
+
+    useEffect(() => {
+        fetchReservations();
+        fetchTables();
+    }, []);
+
+    const fetchReservations = async () => {
+        try {
+            const response = await request({ path: 'reservations' });
+            setReservations(response.data);
+        } catch (error) {
+            toast.error('Failed to fetch reservations');
+        }
+    };
+
+    const fetchTables = async () => {
+        try {
+            const response = await request({ path: 'tables' });
+            setTables(response.data);
+        } catch (error) {
+            toast.error('Failed to fetch tables');
+        }
+    };
 
     const handleShowModal = (reservation = null) => {
         setCurrentReservation(reservation);
@@ -36,30 +53,41 @@ const Reservation = () => {
 
     const handleCloseModal = () => setShowModal(false);
 
-    const onSubmit = (data) => {
+    const onSubmit = async (data) => {
         const newReservation = {
             id: currentReservation ? currentReservation.id : Date.now(),
             ...data,
         };
 
-        if (currentReservation) {
-            // Update existing reservation
-            setReservations(reservations.map(reservation =>
-                reservation.id === currentReservation.id ? newReservation : reservation
-            ));
-            toast.success('Đặt bàn đã được cập nhật!');
-        } else {
-            // Add new reservation
-            setReservations([...reservations, newReservation]);
-            toast.success('Đặt bàn đã được thêm!');
+        try {
+            if (currentReservation) {
+                // Update existing reservation
+                await axios.put(`/api/v1/reservations/${currentReservation.id}`, newReservation);
+                setReservations(reservations.map(reservation =>
+                    reservation.id === currentReservation.id ? newReservation : reservation
+                ));
+                toast.success('Đặt bàn đã được cập nhật!');
+            } else {
+                // Add new reservation
+                await axios.post('/api/v1/reservations', newReservation);
+                setReservations([...reservations, newReservation]);
+                toast.success('Đặt bàn đã được thêm!');
+            }
+        } catch (error) {
+            toast.error('Failed to save reservation');
         }
 
         handleCloseModal();
     };
 
-    const handleDeleteReservation = (id) => {
-        setReservations(reservations.filter(reservation => reservation.id !== id));
-        toast.success('Đặt bàn đã được xóa!');
+    const handleDeleteReservation = async (id) => {
+        try {
+            await axios.delete(`/api/v1/reservations/${id}`);
+            setReservations(reservations.filter(reservation => reservation.id !== id));
+            toast.success('Đặt bàn đã được xóa!');
+        } catch (error) {
+            toast.error('Failed to delete reservation');
+        }
     };
 
     const getUnavailableTimes = (tableNumber) => {

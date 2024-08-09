@@ -1,16 +1,21 @@
 import { Alert, Container } from "react-bootstrap";
 import './style.css';
 import { useNavigate } from "react-router-dom";
-import { useCookies } from "react-cookie";
+import { useEffect, useState } from "react";
+import { getMyInfo } from "../../../services/Auth";
 
-const HeaderTop = ({ user }) => {
+const HeaderTop = () => {
     const navigate = useNavigate();
+    const [user, setUser] = useState({});
 
-    const logout = () => {
-        localStorage.clear();
-        navigate('/home');
-        window.location.reload();
-    };
+    useEffect(() => {
+        getUserInfo();
+    }, [])
+
+    const getUserInfo = async () => {
+        const res = await getMyInfo();
+        setUser(res);
+    }
 
     return (
         <Alert variant='light' className="alert-custom">
@@ -18,19 +23,15 @@ const HeaderTop = ({ user }) => {
                 <span>
                     Xin chào &nbsp;
                     <i>
-                        {user.fullName}
+                        {user?.fullName}
                     </i>
                 </span>
                 <div className="d-flex justify-content-between align-content-center gap-4">
-                    <a href="/your-table" className="link-custom">
-                        Bàn của bạn
-                    </a>
                     <a
-                        href={user.id ? '/' : '/account'}
+                        href={user?.id ? '/my-info' : '/account'}
                         className="link-custom"
-                        onClick={user.id ? logout : null}
                     >
-                        {user.id ? 'Đăng xuất' : 'Tài khoản'}
+                        Tài khoản
                     </a>
                     <div>
                         Hotline:

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Form, Table, Modal, Image, Pagination } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Table, Modal, Image } from 'react-bootstrap';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
 import { useDropzone } from 'react-dropzone';
 import request from '../../../config/apiConfig';
 import toast, { Toaster } from 'react-hot-toast';
 import { confirmAlert } from 'react-confirm-alert';
+import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
+
 
 const Menu = () => {
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
@@ -30,7 +33,7 @@ const Menu = () => {
       const res = await request({
         path: 'categories'
       })
-      setCategories(res.data);
+      setCategories(res);
     } catch (error) {
       alert(error)
     }
@@ -39,9 +42,10 @@ const Menu = () => {
   const fetchDishData = async () => {
     try {
       const res = await request({
-        path: 'dishes'
+        path: 'dishes',
+        header: 'Bearer '
       })
-      setDishes(res.data);
+      setDishes(res);
     } catch (error) {
       alert(error)
     }
@@ -56,7 +60,7 @@ const Menu = () => {
       setValue('price', dish.price);
       setValue('salePrice', dish.salePrice);
       setValue('category', dish.category?.id);
-      setUploadedImage(dish.image);
+      setUploadedImage(`/assets/images/${dish.image}`);
       setImageFileName(dish.image);
     } else {
       // Reset form for adding new dish
@@ -69,19 +73,18 @@ const Menu = () => {
 
   const handleCloseModal = () => setShowModal(false);
 
-  const handleStatusChange = async (dish, status) => {
-    dish.status = status;
+  const handleStatusChange = async (dish) => {
     try {
       const res = await request({
         method: 'PUT',
-        path: `dishes/${dish.id}`,
+        path: `dishes/status/${dish.id}`,
         data: dish,
+        header: 'Bearer '
       });
       fetchDishData();
-      if (res.success) {
+      if (res) {
         toast.success('Món đã được cập nhật!');
       }
-
     } catch (error) {
       alert(error)
     }
@@ -104,17 +107,18 @@ const Menu = () => {
       image: imageFileName,
       status: true
     };
+    console.log(newDish);
 
     if (currentDish) {
-      // Update dish
       try {
         const res = await request({
           method: 'PUT',
           path: `dishes/${currentDish.id}`,
           data: newDish,
+          header: 'Bearer '
         });
         fetchDishData();
-        if (res.success) {
+        if (res) {
           toast.success('Món đã được cập nhật!');
         }
 
@@ -122,12 +126,12 @@ const Menu = () => {
         alert(error)
       }
     } else {
-      // Add new dish
       try {
         const res = await request({
           method: 'POST',
           path: 'dishes',
           data: newDish,
+          header: 'Bearer '
         });
 
         const formData = new FormData();
@@ -136,10 +140,11 @@ const Menu = () => {
           method: 'POST',
           path: 'dishes/uploads',
           data: formData,
+          header: 'Bearer ',
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         fetchDishData();
-        if (res.success) {
+        if (res) {
           toast.success('Món đã được thêm!');
         }
       } catch (error) {
@@ -148,11 +153,13 @@ const Menu = () => {
     }
     handleCloseModal();
   };
+
   const handleDeleteDish = async (id) => {
     try {
       await request({
         method: 'DELETE',
         path: `dishes/${id}`,
+        header: 'Bearer '
       })
     } catch (error) {
       alert(error)
@@ -219,7 +226,6 @@ const Menu = () => {
                   <tr>
                     <th>Hình Ảnh</th>
                     <th>Tên Món</th>
-                    <th>Giá Nhập</th>
                     <th>Giá Bán</th>
                     <th>Danh Mục</th>
                     <th>Trạng Thái</th>
@@ -232,13 +238,12 @@ const Menu = () => {
                       <td><Image src={`/assets/images/${dish.image}`} thumbnail style={{ width: '100px', height: '80px' }} /></td>
                       <td>{dish.name}</td>
                       <td>{dish.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
-                      <td>{dish.salePrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
                       <td>{dish.category?.name}</td>
                       <td>
                         <Form.Check
                           type="checkbox"
                           checked={dish.status}
-                          onChange={(e) => handleStatusChange(dish, e.target.checked)}
+                          onChange={(e) => handleStatusChange(dish)}
                         />
                       </td>
                       <td>
@@ -253,17 +258,14 @@ const Menu = () => {
                   ))}
                 </tbody>
               </Table>
-              <Pagination className='d-flex justify-content-center'>
-                {[...Array(totalPages)]?.map((_, idx) => (
-                  <Pagination.Item
-                    key={idx + 1}
-                    active={idx + 1 === currentPage}
-                    onClick={() => handlePageChange(idx + 1)}
-                  >
-                    {idx + 1}
-                  </Pagination.Item>
-                ))}
-              </Pagination>
+              <Stack spacing={2} alignItems="center">
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={(event, page) => handlePageChange(page)}
+                  color="primary"
+                />
+              </Stack>
             </Card.Body>
           </Card>
         </Col>
@@ -300,21 +302,11 @@ const Menu = () => {
               <Form.Control
                 type="number"
                 id="dishprice"
-                placeholder="Giá nhập"
-                {...register('price', { required: 'Giá nhập không được để trống', valueAsNumber: true })}
-              />
-              <Form.Label htmlFor="dishprice">Giá Nhập</Form.Label>
-              {errors.price && <Form.Text className="text-danger">{errors.price.message}</Form.Text>}
-            </Form.Floating>
-            <Form.Floating className="mb-3">
-              <Form.Control
-                type="number"
-                id="dishSalePrice"
                 placeholder="Giá bán"
-                {...register('salePrice', { required: 'Giá bán không được để trống', valueAsNumber: true })}
+                {...register('price', { required: 'Giá bán không được để trống', valueAsNumber: true })}
               />
-              <Form.Label htmlFor="dishSalePrice">Giá Bán</Form.Label>
-              {errors.salePrice && <Form.Text className="text-danger">{errors.salePrice.message}</Form.Text>}
+              <Form.Label htmlFor="dishprice">Giá</Form.Label>
+              {errors.price && <Form.Text className="text-danger">{errors.price.message}</Form.Text>}
             </Form.Floating>
             <Form.Floating className="mb-3">
               <Form.Select
@@ -334,8 +326,8 @@ const Menu = () => {
               <div {...getRootProps({ className: 'dropzone border p-3 mb-3 rounded text-center' })}>
                 <input {...getInputProps()} />
                 <p>Kéo thả hình ảnh vào đây, hoặc nhấp để chọn tệp</p>
-                {currentDish ? <Image src={`/assets/images/${uploadedImage}`} thumbnail style={{ width: '150px' }} />
-                  : <Image src={`${uploadedImage}`} thumbnail style={{ width: '150px' }} />}
+                <Image src={`${uploadedImage}`} thumbnail style={{ width: '150px' }} />
+                {/* {currentDish && <Image src={`${uploadedImage}`} thumbnail style={{ width: '150px' }} />} */}
               </div>
             </Form.Group>
             <Button variant="primary" type="submit">

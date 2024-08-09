@@ -67,10 +67,10 @@ const BookTable = () => {
 
     // Mốc thời gian đặt bàn
     const timeSlots = [
-        '14h-16h',  // 2 PM - 4 PM
-        '16h-18h',  // 4 PM - 6 PM
-        '18h-20h',  // 6 PM - 8 PM
-        '20h-22h',  // 8 PM - 10 PM
+        '2 PM - 4 PM',  // 2 PM - 4 PM
+        '4 PM - 6 PM',  // 4 PM - 6 PM
+        '6 PM - 8 PM',  // 6 PM - 8 PM
+        '8 PM - 10 PM',  // 8 PM - 10 PM
     ];
     
 
@@ -145,17 +145,17 @@ const BookTable = () => {
                             <p>Số ghế: {selectedTable.seats}</p>
                             <Form.Group>
                                 <Form.Label>Chọn khoảng thời gian:</Form.Label>
-                                <div>
+                                <Row>
                                     {timeSlots.map((slot) => (
-                                        <div
+                                        <Col sm={6}
                                             key={slot}
-                                            className={`filter-item ${selectedTimeSlot === slot ? 'active' : ''}`}
+                                            className={`m-0 mb-2 filter-item ${selectedTimeSlot === slot ? 'active' : ''}`}
                                             onClick={() => setSelectedTimeSlot(slot)}
                                         >
                                             {slot}
-                                        </div>
+                                        </Col>
                                     ))}
-                                </div>
+                                </Row>
                             </Form.Group>
                         </div>
                     </Modal.Body>

@@ -232,7 +232,7 @@ const Employee = () => {
                                     required: 'Mật khẩu không được bỏ trống',
                                     minLength: {
                                         value: 6,
-                                        message: 'Mật khẩu phải có ít nhất 6 ký tự'
+                                        message: 'Mật khẩu phải có ít nhất 6 ký tự' 
                                     }
                                 })}
                             />
@@ -244,7 +244,7 @@ const Employee = () => {
                                 Hủy
                             </Button>
                             <Button variant="primary" type="submit">
-                                {isEditing ? 'Cập Nhật' : 'Thêmmmm'}
+                                {isEditing ? 'Cập Nhật' : 'Thêm'}
                             </Button>
                         </div>
                     </Form>

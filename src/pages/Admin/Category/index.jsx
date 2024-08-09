@@ -24,7 +24,7 @@ const Category = () => {
   const fetchCategories = async () => {
     try {
       const res = await request({ path: 'categories' });
-      setCategories(res.data);
+      setCategories(res);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -41,14 +41,16 @@ const Category = () => {
         await request({
           method: 'PUT',
           path: `categories/${categories[editIndex].id}`,
-          data: newCategory
+          data: newCategory,
+          header: 'Bearer '
         });
         toast.success('Cập nhật danh mục thành công!');
       } else {
         await request({
           method: 'POST',
           path: 'categories',
-          data: newCategory
+          data: newCategory,
+          header: 'Bearer '
         });
         toast.success('Thêm danh mục thành công!');
       }
@@ -74,7 +76,7 @@ const Category = () => {
 
   const handleDelete = async (id) => {
     try {
-      await request({ method: 'DELETE', path: `categories/${id}` });
+      await request({ method: 'DELETE', path: `categories/${id}`, header: 'Bearer ' });
       fetchCategories();
       toast.success('Xóa danh mục thành công!');
     } catch (error) {
@@ -102,7 +104,7 @@ const Category = () => {
 
   const handleCloseModal = () => setShowModal(false);
 
-  const filteredCategories = categories.filter(category =>
+  const filteredCategories = categories?.filter(category =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -130,7 +132,7 @@ const Category = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCategories.map((category, index) => (
+                  {filteredCategories?.map((category, index) => (
                     <tr key={category.id}>
                       <td>{category.name}</td>
                       <td>{category.description}</td>

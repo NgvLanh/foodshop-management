@@ -6,29 +6,47 @@ import toast, { Toaster } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import request from '../../../config/apiConfig';
 
-const initialCartItems = JSON.parse(localStorage.getItem('tempCartItem')) || [];
-
 const Header = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredSuggestions, setFilteredSuggestions] = useState([]);
     const [dishes, setDishes] = useState([]);
-    const [cartItems, setCartItems] = useState(initialCartItems);
+    const [cart, setCart] = useState(null);
+    const [cartItems, setCartItems] = useState([]);
+
+    const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
-        fetchDataDishes();
+        fetchDishes();
+        if (user) {
+            fetchCart();
+        }
     }, []);
 
-    const fetchDataDishes = async () => {
+    const fetchDishes = async () => {
         try {
             const res = await request({ path: 'dishes' });
-            setDishes(res.data);
+            setDishes(res);
         } catch (error) {
-            alert(error)
+            console.error('Error fetching dishes:', error);
+        }
+    };
+
+    const fetchCart = async () => {
+        try {
+            const res_cart = await request({ path: `carts/customers/${user.id}` });
+            setCart(res_cart.data);
+
+            if (res_cart.data) {
+                const res_cart_item = await request({ path: `cart-items/cart/${res_cart.data.id}` });
+                setCartItems(res_cart_item.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching cart:', error);
         }
     };
 
     const calculateTotal = () => {
-        return cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toLocaleString('vi-VN');
+        return cartItems.reduce((total, item) => total + item.dish.price * item.quantity, 0).toLocaleString('vi-VN');
     };
 
     const handleInputChange = (event) => {
@@ -50,51 +68,81 @@ const Header = () => {
         setFilteredSuggestions([]);
     };
 
-    const handleAddToCart = (item) => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            const existingItemIndex = cartItems.findIndex(cartItem => cartItem.name === item.name);
-            let updatedCartItems;
+    const handleAddToCart = async (item) => {
+        if (!user) {
+            toast.error('Bạn cần đăng nhập để thêm món vào giỏ hàng.');
+            return;
+        }
 
-            if (existingItemIndex !== -1) {
-                updatedCartItems = [...cartItems];
-                updatedCartItems[existingItemIndex].quantity += 1;
+        try {
+            // Check if the item already exists in the cart
+            const existingItem = cartItems.find(cartItem => cartItem.dish.id === item.id);
+
+            if (existingItem) {
+                // Update the quantity if the item exists
+                await request({
+                    method: 'PUT',
+                    path: `cart-items/${existingItem.id}`,
+                    data: {
+                        ...existingItem,
+                        quantity: existingItem.quantity + 1
+                    }
+                });
             } else {
-                updatedCartItems = [...cartItems, { ...item, quantity: 1 }];
+                // Add the item to the cart if it doesn't exist
+                await request({
+                    method: 'POST',
+                    path: 'cart-items',
+                    data: {
+                        quantity: 1,
+                        status: true,
+                        isSelected: true,
+                        dish: item,
+                        cart: cart
+                    }
+                });
             }
 
-            localStorage.setItem('tempCartItem', JSON.stringify(updatedCartItems));
-            setCartItems(updatedCartItems);
-        } else {
-            console.log(token);
+            fetchCart();
+            toast.success(`Thêm ${item.name} vào giỏ hàng thành công.`);
+        } catch (error) {
+            console.error('Error adding item to cart:', error);
+            toast.error('Đã xảy ra lỗi khi thêm món vào giỏ hàng.');
         }
-        toast.success(`Thêm ${item.name} vào giỏ hàng thành công.`);
-        setTimeout(() => { window.location.reload(); }, 500);
     };
 
-    const handleRemoveItem = (index) => {
-        const currentCartItems = JSON.parse(localStorage.getItem('tempCartItem')) || [];
-        const removedItem = currentCartItems[index];
-        const updatedCartItems = currentCartItems.filter((_, i) => i !== index);
-
-        localStorage.setItem('tempCartItem', JSON.stringify(updatedCartItems));
-        setCartItems(updatedCartItems);
-        toast.success(`Đã xóa ${removedItem.name} khỏi giỏ hàng.`);
+    const handleRemoveItem = async (item) => {
+        try {
+            await request({
+                method: 'DELETE',
+                path: `cart-items/${item.id}`,
+            });
+            fetchCart();
+            toast.success(`Đã xóa ${item.dish.name} khỏi giỏ hàng.`);
+        } catch (error) {
+            console.error('Error removing item from cart:', error);
+            toast.error('Đã xảy ra lỗi khi xóa món khỏi giỏ hàng.');
+        }
     };
 
-    const handleQuantityChange = (item, newQuantity) => {
-        const existingItemIndex = cartItems.findIndex(cartItem => cartItem.name === item.name);
-        let updatedCartItems;
-        if (existingItemIndex !== -1) {
-            updatedCartItems = [...cartItems];
-            updatedCartItems[existingItemIndex].quantity = newQuantity;
-        } else {
-            updatedCartItems = [...cartItems, { ...item, quantity: 1 }];
+    const handleQuantityChange = async (item, newQuantity) => {
+        if (newQuantity < 1) {
+            toast.error('Số lượng phải lớn hơn hoặc bằng 1.');
+            return;
         }
-
-        localStorage.setItem('tempCartItem', JSON.stringify(updatedCartItems));
-        setCartItems(updatedCartItems);
-        toast.success(`Số lượng ${item.name} đã được cập nhật.`);
+        item.quantity = newQuantity;
+        try {
+            await request({
+                method: 'PUT',
+                path: `cart-items/${item.id}`,
+                data: item
+            });
+            fetchCart();
+            toast.success(`Số lượng ${item.dish.name} đã được cập nhật.`);
+        } catch (error) {
+            console.error('Error updating item quantity:', error);
+            toast.error('Đã xảy ra lỗi khi cập nhật số lượng món.');
+        }
     };
 
     return (
@@ -127,7 +175,7 @@ const Header = () => {
                                             <div className='d-flex align-items-center p-2'>
                                                 <img src={`/assets/images/${suggestion.image}`} alt={suggestion.name} style={{ height: '70px', width: '100px' }} />
                                                 <div className="suggestion-item-details ms-2">
-                                                    <div className="suggestion-item-name">{suggestion.name}</div>
+                                                    <div className="suggestion-item-name">{suggestion?.name}</div>
                                                     <div className="suggestion-item-price">{suggestion.price.toLocaleString('vi-VN')} VND</div>
                                                 </div>
                                             </div>
@@ -152,15 +200,15 @@ const Header = () => {
                                     </Badge>
                                 </span>
                             }>
-                                {cartItems?.length === 0 ? (
+                                {cartItems.length === 0 ? (
                                     <div className="navbar-cart-empty text-center px-2">Không có món ăn nào</div>
                                 ) : (
                                     <div className="navbar-cart-items">
-                                        {cartItems?.map((item, index) => (
+                                        {cartItems.map((item, index) => (
                                             <div key={index} className="cart-item d-flex align-items-center p-2">
-                                                <img src={`/assets/images/${item.image}`} alt={item.name} className="cart-item-image" />
+                                                <img src={`/assets/images/${item.dish.image}`} alt={item.name} className="cart-item-image" />
                                                 <div className="cart-item-details flex-grow-1 ms-2">
-                                                    <div className="cart-item-name">{item.name}</div>
+                                                    <div className="cart-item-name">{item.dish.name}</div>
                                                     <div className="cart-item-info d-flex align-items-center">
                                                         <input
                                                             type="number"
@@ -170,13 +218,13 @@ const Header = () => {
                                                             onChange={(e) => handleQuantityChange(item, e.target.value)}
                                                         />
                                                         <span className="mx-2">x</span>
-                                                        <span>{item.price.toLocaleString('vi-VN')}</span>
+                                                        <span>{item.dish.price.toLocaleString('vi-VN')}</span>
                                                     </div>
                                                 </div>
                                                 <Button
                                                     variant=""
                                                     className="cart-item-remove mt-4 mx-2"
-                                                    onClick={() => handleRemoveItem(index)}
+                                                    onClick={() => handleRemoveItem(item)}
                                                 >
                                                     ❌
                                                 </Button>
@@ -196,14 +244,10 @@ const Header = () => {
                             </NavDropdown>
                         </Nav>
                     </Navbar.Collapse>
-                    <Navbar style={{
-                        width: '100%'
-                    }}>
+                    <Navbar style={{ width: '100%' }}>
                         <Nav className="w-100 d-flex justify-content-between align-items-center">
                             <Nav.Item>
-                                <Nav.Link href="/dish-list" style={{
-                                    fontWeight: '500'
-                                }}>
+                                <Nav.Link href="/dishes" style={{ fontWeight: '500' }}>
                                     Danh sách món ăn
                                 </Nav.Link>
                             </Nav.Item>
@@ -214,11 +258,8 @@ const Header = () => {
                                 <Nav.Link href="/about-us" style={{ margin: '0 8px' }}>
                                     Giới thiệu
                                 </Nav.Link>
-                                <Nav.Link href="/news" style={{ margin: '0 8px' }}>
-                                    Tin tức
-                                </Nav.Link>
-                                <Nav.Link href="/book-table" className="book-table-link">
-                                    Đặt bàn nhanh
+                                <Nav.Link href="/contact" style={{ margin: '0 8px' }}>
+                                    Liên hệ
                                 </Nav.Link>
                             </div>
                         </Nav>

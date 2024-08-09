@@ -1,78 +1,40 @@
-import { Button, Card, Carousel, Col, Row } from "react-bootstrap";
-import { Swiper, SwiperSlide } from "swiper/react";
-import 'swiper/css';
+import { Col, Row } from "react-bootstrap";
+import * as React from 'react';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 import './style.css';
-import BookTable from "../BookTable";
 import { useEffect, useState } from "react";
-import response from '../../../config/apiConfig';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaShoppingCart } from "react-icons/fa";
-import toast, { Toaster } from "react-hot-toast";
-
+import request from "../../../config/apiConfig";
+import { FaCarTunnel } from "react-icons/fa6";
 
 const Home = () => {
     const [dishes, setDishes] = useState([]);
-    const [tempCartItem, setTempCartItem] = useState(() => {
-        const savedItems = localStorage.getItem('tempCartItem');
-        return savedItems ? JSON.parse(savedItems) : [];
-    });
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchDataDishes();
     }, []);
 
-    useEffect(() => {
-        console.log("Updated tempCartItem:", tempCartItem);
-        localStorage.setItem('tempCartItem', JSON.stringify(tempCartItem));
-    }, [tempCartItem]);
-
     const fetchDataDishes = async () => {
-        const res = await response({
-            path: 'dishes'
-        });
-        setDishes(res.data);
-    }
-
-    const addToCart = (dish) => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setTempCartItem(prevCartItems => {
-                const updatedCartItems = [...prevCartItems, { ...dish, quantity: 1 }];
-                console.log("Adding to cart:", updatedCartItems);
-                setTimeout(() => { window.location.reload(); }, 500);
-                return updatedCartItems;
-            });
-        } else {
-            console.log(token);
+        try {
+            const res = await request({ path: 'dishes/status-true' });
+            console.log(res);
+            setDishes(res || []);
+        } catch (error) {
+            console.error('Error fetching dishes:', error);
         }
-        toast.success(`Thêm ${dish.name} vào giỏ hàng thành công.`);
-    }
+    };
+
+
 
     return (
         <div>
-            <Toaster />
-            <Carousel className="mb-4 mt-2">
-                {dishes.slice(0, 3).reverse().map((dish) => (
-                    <Carousel.Item key={dish.id} className="carousel-item-overlay">
-                        <img
-                            src={`assets/images/${dish.image}`}
-                            alt={`${dish.name}`}
-                            style={{
-                                width: '100%',
-                                height: '650px',
-                                objectFit: 'cover',
-                            }}
-                        />
-                        <div className="overlay"></div>
-                        <Carousel.Caption>
-                            <h3>{dish.name}</h3>
-                            <p>{dish.description}</p>
-                            <Link to={'/dish-list'} style={{ color: 'white', textDecoration: 'none' }}>Xem thêm</Link>
-                        </Carousel.Caption>
-                    </Carousel.Item>
-                ))}
-            </Carousel>
-
             <Row className="align-items-center mb-4">
                 <Col className="text-left">
                     <h3>Món ăn nổi bậc</h3>
@@ -81,37 +43,39 @@ const Home = () => {
                     <Button variant="link" href='/dish-list' className="text-primary">Xem thêm</Button>
                 </Col>
             </Row>
-            <Swiper
-                spaceBetween={20}
-                slidesPerView={5}
-                navigation
-                pagination={{ clickable: true }}
-                scrollbar={{ draggable: true }}
-            >
-                {dishes.map(dish => (
-                    <SwiperSlide key={dish.id}>
-                        <div className="hover-card">
-                            <Card className="card-hover">
-                                <div className="hover-card-image-container">
-                                    <Card.Img src={`assets/images/${dish.image}`} />
-                                    <div className="hover-card-overlay">
-                                        <Card.Body className="hover-card-body">
-                                            <Card.Title>{dish.name}</Card.Title>
-                                            <Card.Text>{dish.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Card.Text>
-                                            <Button style={{ opacity: '0.7' }}>
-                                                <FaShoppingCart size={18} onClick={() => addToCart(dish)} />
-                                            </Button>
-                                        </Card.Body>
-                                    </div>
-                                </div>
+
+            <Row>
+                {dishes?.map(dish => (
+                    <Col key={dish.id} sm={3}>
+                        <Link to={`/dishes/${dish.id}`} style={{ textDecoration: 'none' }}>
+                            <Card sx={{ maxWidth: 345 }}>
+                                <CardMedia
+                                    component="img"
+                                    alt="green iguana"
+                                    height="170"
+                                    image={`/assets/images/${dish.image}`}
+                                />
+                                <CardContent>
+                                    <Typography gutterBottom variant="h5" component="div">
+                                        {dish.name}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {dish.description}
+                                    </Typography>
+                                </CardContent>
+                                <CardActions>
+                                    <Button size="small">Share</Button>
+                                    <Button size="medium">
+                                        <FaShoppingCart size={20} />
+                                    </Button>
+                                </CardActions>
                             </Card>
-                        </div>
-                    </SwiperSlide>
+                        </Link>
+                    </Col>
                 ))}
-            </Swiper>
-            <BookTable />
+            </Row>
         </div>
     );
-}
+};
 
 export default Home;

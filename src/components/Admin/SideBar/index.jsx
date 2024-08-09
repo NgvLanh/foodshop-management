@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Nav } from "react-bootstrap";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdOutlineDashboard } from "react-icons/md";
 import { BiFoodMenu } from "react-icons/bi";
 import { BiCategory } from "react-icons/bi";
@@ -12,14 +12,25 @@ import { MdDiscount } from "react-icons/md";
 import { GiHotMeal } from "react-icons/gi";
 import { FaFileInvoice } from "react-icons/fa";
 import "./style.css";
+import { getMyInfo } from "../../../services/Auth";
 
 const Sidebar = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const [user, setUser] = useState({});
     const [activeTab, setActiveTab] = useState(location.pathname);
+
     const handleTabClick = (tab) => {
         setActiveTab(tab);
     };
 
+    useEffect(() => {
+        getUserInfo();
+    }, []);
+    const getUserInfo = async () => {
+        const res = await getMyInfo();
+        setUser(res);
+    }
     return (
         <div
             className="sidebar d-flex flex-column vh-100"
@@ -28,7 +39,7 @@ const Sidebar = () => {
             <Nav className="flex-column">
                 <div className="logo">
                     <img src="/assets/images/profile.png" alt="Logo" className="logo-img" />
-                    <h6>Quản lý</h6>
+                    <h6>{user?.email}</h6>
                 </div>
                 <Nav.Item>
                     <Nav.Link
