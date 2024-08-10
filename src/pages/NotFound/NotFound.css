@@ -1,0 +1,33 @@
+.not-found-container {
+    height: 100vh;
+    background-image: url('https://thuthuatnhanh.com/wp-content/uploads/2022/09/hinh-nen-powerpoint-chu-de-mon-an-dep-don-gian.jpeg'); /* Thay đổi URL thành đường dẫn hình ảnh của bạn */
+    background-size: cover; /* Đảm bảo hình ảnh bao phủ toàn bộ vùng chứa */
+    background-position: center; /* Căn giữa hình ảnh */
+    color: black; /* Màu chữ */
+}
+
+.oops-text {
+    font-size: 80px; /* Kích thước chữ lớn */
+    font-weight: bold; /* Chữ đậm */
+    margin: 0; /* Bỏ margin */
+    color: black;
+}
+
+h2 {
+    font-size: 24px; /* Kích thước chữ cho tiêu đề phụ */
+    color: black; /* Màu chữ cho tiêu đề phụ */
+}
+
+button {
+    background-color: #ff7f50; /* Màu nền cho nút */
+    border: none; /* Bỏ viền */
+    padding: 10px 20px; /* Padding cho nút */
+    font-size: 16px; /* Kích thước chữ cho nút */
+    color: black; /* Màu chữ cho nút */
+    border-radius: 50px; /* Bo góc cho nút */
+}
+
+button:hover {
+    background-color: #ff6347; /* Màu khi hover */
+}
+

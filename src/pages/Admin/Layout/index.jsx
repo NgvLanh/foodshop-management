@@ -29,7 +29,6 @@ const Admin = () => {
                     <Outlet />
                 </div>
             </div>
-            {/* <h1 className="text-danger pt-3 pb-3">Footer</h1> */}
         </div>
     )
 }

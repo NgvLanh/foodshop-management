@@ -117,6 +117,15 @@ const Menu = () => {
           data: newDish,
           header: 'Bearer '
         });
+        const formData = new FormData();
+        formData.append('image', file);
+        const res_up = await request({
+          method: 'POST',
+          path: 'dishes/uploads',
+          data: formData,
+          header: 'Bearer ',
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         fetchDishData();
         if (res) {
           toast.success('Món đã được cập nhật!');
@@ -199,9 +208,9 @@ const Menu = () => {
 
 
   // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentDishes = dishes?.slice(indexOfFirstItem, indexOfLastItem);
+  const indexOfFirstItem = dishes.length - (currentPage * itemsPerPage);
+  const indexOfLastItem = indexOfFirstItem + itemsPerPage;
+  const currentDishes = dishes?.slice(Math.max(indexOfFirstItem, 0), Math.max(indexOfLastItem, 0)).reverse();
   const totalPages = Math.ceil(dishes?.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
@@ -219,7 +228,7 @@ const Menu = () => {
       </Row>
       <Row>
         <Col>
-          <Card>
+          <Card className='rounded-0'>
             <Card.Body>
               <Table striped bordered hover>
                 <thead>

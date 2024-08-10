@@ -13,7 +13,6 @@ const Client = () => {
     return (
         <div>
             <Toaster />
-            <HeaderTop />
             <Header />
             <div className='pt-2'>
                 <Container>

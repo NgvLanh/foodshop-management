@@ -1,18 +1,17 @@
+import React from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
-import { IoMdWarning } from 'react-icons/io';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
+import './NotFound.css'; // Tạo file CSS riêng để định dạng
 
 const NotFound = () => {
     return (
-        <Container fluid className="d-flex align-items-center justify-content-center" style={{ height: '100vh', backgroundColor: '#f7f7f7' }}>
+        <Container fluid className="not-found-container d-flex align-items-center justify-content-center">
             <Row className="text-center">
                 <Col>
-                    <IoMdWarning size={80} color="#ff4d4d" />
-                    <h1 className="mt-4">404</h1>
-                    <h2>Trang không tìm thấy</h2>
-                    <p className="mt-3">Xin lỗi, trang bạn đang tìm không tồn tại.</p>
+                    <h1 className="oops-text">OOPS!</h1>
+                    <h2 className="mt-4">404 - KHÔNG TÌM THẤY TRANG</h2>
                     <Link to="/home">
-                        <Button variant="primary" className="mt-3">Trở về trang chủ</Button>
+                        <Button variant="warning" className="mt-3">QUAY LẠI TRANG CHỦ</Button>
                     </Link>
                 </Col>
             </Row>

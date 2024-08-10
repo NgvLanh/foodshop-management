@@ -15,16 +15,15 @@ import NotFound from "./pages/NotFound";
 import Client from "./pages/Client/Layout";
 import Home from "./pages/Client/Home";
 import AboutUs from "./pages/Client/AboutUs";
-import BookTable from "./pages/Client/BookTable";
 import Cart from "./pages/Client/Cart";
 import YourTable from "./pages/Client/YourTable";
 import Account from "./pages/Client/Account";
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from "react-hot-toast";
-import UserInfo from "./pages/Client/UserInfo";
 import { getMyInfo } from "./services/Auth";
 import Dishes from "./pages/Client/Dishes";
+import Profile from "./pages/Client/Profile";
 
 
 const ProtectedRoute = ({ element, adminOnly = false }) => {
@@ -53,7 +52,6 @@ const ProtectedRoute = ({ element, adminOnly = false }) => {
           hasShownToast.current = true;
           navigate('/account');
         }
-
       }
     };
 
@@ -72,10 +70,8 @@ const router = createBrowserRouter(
         <Route path="home" element={<Home />} />
         <Route path="dishes" element={<Dishes />} />
         <Route path="about-us" element={<AboutUs />} />
-        <Route path="my-info" element={<ProtectedRoute element={<UserInfo />} />} />
+        <Route path="Profile" element={<ProtectedRoute element={<Profile />} />} />
         <Route path="cart" element={<ProtectedRoute element={<Cart />} />} />
-
-        <Route path="your-table" element={<ProtectedRoute element={<YourTable />} />} /> {/* Bảo vệ đường dẫn /your-table */}
         <Route path="account" element={<Account />} />
       </Route>
 

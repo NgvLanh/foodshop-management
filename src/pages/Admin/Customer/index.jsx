@@ -6,35 +6,36 @@ import request from '../../../config/apiConfig';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { confirmAlert } from 'react-confirm-alert';
 
-const Customer = () => {
-  const [customers, setCustomers] = useState([]);
+const User = () => {
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fillDataCustomer();
+    fillDataUser();
   }, []);
 
-  const fillDataCustomer = async () => {
+  const fillDataUser = async () => {
     try {
-      const fill = await request({
-        path: 'customers'
+      const res = await request({
+        path: 'users',
+        header: 'Bearer '
       });
-      setCustomers(fill.data);
+      setUsers(res);
     } catch (error) {
-      console.log('Error get customer:' + error);
+      alert(error);
     }
   };
 
-  const handleDelete = async (customerId) => {
+  const handleDelete = async (userId) => {
     try {
       await request({
         method: 'DELETE',
-        path: `customers/${customerId}`
+        path: `users/${userId}`
       });
-      setCustomers(customers.filter((customer) => customer.id !== customerId));
-      toast.success('Customer deleted successfully');
+      setUsers(users.filter((user) => user.id !== userId));
+      toast.success('user deleted successfully');
     } catch (error) {
-      toast.error('Failed to delete customer');
+      toast.error('Failed to delete user');
     }
   };
 
@@ -54,22 +55,22 @@ const Customer = () => {
     });
   };
 
-  const handleToggleActive = async (customerId) => {
-    const customer = customers.find((c) => c.id === customerId);
-    const updatedCustomer = { ...customer, activated: !customer.activated };
+  const handleToggleActive = async (userId) => {
+    const user = users.find((c) => c.id === userId);
+    const updatedUser = { ...user, activated: !user.activated };
 
     try {
       await request({
         method: 'PUT',
-        path: `customers/${customerId}`,
-        data: updatedCustomer
+        path: `users/${userId}`,
+        data: updatedUser
       });
-      setCustomers(customers.map((customer) =>
-        customer.id === customerId ? updatedCustomer : customer
+      setUsers(users.map((user) =>
+        user.id === userId ? updatedUser : user
       ));
-      toast.success('Customer status updated');
+      toast.success('user status updated');
     } catch (error) {
-      toast.error('Failed to update customer status');
+      toast.error('Failed to update user status');
     }
   };
 
@@ -77,8 +78,8 @@ const Customer = () => {
     setSearch(e.target.value);
   };
 
-  const filteredCustomers = customers.filter((customer) =>
-    customer.phoneNumber.includes(search)
+  const filteredUsers = users.filter((user) =>
+    user?.phoneNumber?.includes(search)
   );
 
   return (
@@ -101,7 +102,7 @@ const Customer = () => {
       </Row>
       <Row>
         <Col>
-          <Card>
+          <Card className='rounded-0'>
             <Card.Body>
               <Table striped bordered hover>
                 <thead>
@@ -115,21 +116,21 @@ const Customer = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCustomers.map((customer) => (
-                    <tr key={customer.id}>
-                      <td>{customer.id}</td>
-                      <td>{customer.fullName}</td>
-                      <td>{customer.phoneNumber}</td>
-                      <td>{customer.email}</td>
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id}>
+                      <td>{user.id}</td>
+                      <td>{user.fullName}</td>
+                      <td>{user.phoneNumber}</td>
+                      <td>{user.email}</td>
                       <td>
                         <Form.Check
                           type="checkbox"
-                          checked={customer.activated}
-                          onChange={() => handleToggleActive(customer.id)}
+                          checked={user.activated}
+                          onChange={() => handleToggleActive(user.id)}
                         />
                       </td>
                       <td>
-                        <Button variant="danger" size="sm" onClick={() => confirmDelete(customer.id)}>
+                        <Button variant="danger" size="sm" onClick={() => confirmDelete(user.id)}>
                           <FaTrash /> Xóa
                         </Button>
                       </td>
@@ -145,4 +146,4 @@ const Customer = () => {
   );
 };
 
-export default Customer;
+export default User;

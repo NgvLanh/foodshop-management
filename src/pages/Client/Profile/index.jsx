@@ -6,7 +6,7 @@ import { getMyInfo } from '../../../services/Auth';
 import request from '../../../config/apiConfig';
 import { Cookies } from 'react-cookie';
 
-const UserInfo = () => {
+const Profile = () => {
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
     const [userInfo, setUserInfo] = useState(null);
 
@@ -106,4 +106,4 @@ const UserInfo = () => {
     );
     };
 
-    export default UserInfo;
+    export default Profile;

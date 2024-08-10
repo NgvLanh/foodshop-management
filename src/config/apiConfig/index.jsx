@@ -11,7 +11,6 @@ const request = async ({
 }) => {
     const cookie = new Cookies();
     const token = cookie.get('token');
-    console.log('TOKEN: ' + token);
 
     const res = await axios({
         method: method,

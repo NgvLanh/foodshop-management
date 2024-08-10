@@ -80,7 +80,7 @@ const Category = () => {
       fetchCategories();
       toast.success('Xóa danh mục thành công!');
     } catch (error) {
-      console.error('Error deleting category:', error);
+      toast.error('Không thể xoá danh mục này do ràng buộc dữ liệu!');
     }
   };
 
@@ -121,7 +121,7 @@ const Category = () => {
       </Row>
       <Row>
         <Col>
-          <Card>
+          <Card className='rounded-0'>
             <Card.Body>
               <Table striped bordered hover>
                 <thead>
@@ -132,7 +132,7 @@ const Category = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCategories?.map((category, index) => (
+                  {filteredCategories?.reverse().map((category, index) => (
                     <tr key={category.id}>
                       <td>{category.name}</td>
                       <td>{category.description}</td>

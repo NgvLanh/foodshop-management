@@ -57,7 +57,7 @@ const Order = () => {
             </Row>
             <Row>
                 <Col>
-                    <Card>
+                    <Card className='rounded-0'>
                         <Card.Body>
                             <Table striped bordered hover>
                                 <thead>

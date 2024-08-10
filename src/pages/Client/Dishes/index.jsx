@@ -1,30 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Container, Button, Modal, Form, Row, Col, Pagination } from 'react-bootstrap';
-import { Card, CardMedia, CardContent, CardActions, Typography, TextField, Box } from '@mui/material';
-import { FaShoppingCart } from 'react-icons/fa'; // Import icon for cart
-import toast from "react-hot-toast";
-import request from "../../../config/apiConfig";
-import './style.css';
+import { Container, Button, Modal, Row, Col, Pagination, Stack } from 'react-bootstrap';
+import { Card, CardMedia, CardContent, Typography, TextField, Box } from '@mui/material';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { BiCartAdd, BiCartAlt } from 'react-icons/bi';
+import { Cookies } from 'react-cookie';
+import request from '../../../config/apiConfig';
 import { getMyInfo } from '../../../services/Auth';
+import './style.css';
 
 const Dishes = () => {
     const navigate = useNavigate();
     const [dishes, setDishes] = useState([]);
     const [user, setUser] = useState({});
-    const uniqueTypes = [...new Set(dishes?.map(dish => dish.category.name))]; // Get unique types of dishes
-
     const [selectedDish, setSelectedDish] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8; // Số món ăn trên mỗi trang
-    const [selectedTypes, setSelectedTypes] = useState([]); // Add state for selected types
+    const [selectedTypes, setSelectedTypes] = useState([]);
     const [quantity, setQuantity] = useState(1);
+
+    const itemsPerPage = 8;
+    const uniqueTypes = [...new Set(dishes.map(dish => dish.category.name))];
 
     useEffect(() => {
         fetchDishes();
-        fetchUserInfo();
     }, []);
 
     const fetchDishes = async () => {
@@ -36,42 +34,47 @@ const Dishes = () => {
         }
     };
 
-    const fetchUserInfo = async () => {
-        try {
-            const res = await getMyInfo();
-            console.log(res);
-            setUser(res);
-        } catch (error) {
-            navigate('/account');
-            console.error('Error fetching info:', error);
-        }
-    }
-    const fetchCart = async (userId) => {
-        // try {
-        //     const res_cart = await request({ path: `carts/customers/${userId}` });
-        //     return res_cart.data;
-        // } catch (error) {
-        //     console.error('Error fetching cart:', error);
-        //     return null;
-        // }
-    };
-
-    const fetchCartItems = async (cartId) => {
-        // try {
-        //     const res_cart_items = await request({ path: `cart-items/cart/${cartId}` });
-        //     return res_cart_items.data || [];
-        // } catch (error) {
-        //     console.error('Error fetching cart items:', error);
-        //     return [];
-        // }
-    };
-
     const addToCart = async (dish, quantity) => {
+        const cookie = new Cookies();
+        const token = cookie.get('token');
+
+        if (!token) {
+            toast.error('Vui lòng đăng nhập để tiếp tục.');
+            setTimeout(() => navigate('/account'), 700);
+            return;
+        }
+
         try {
-            const res = await request({ path: `carts/${user.id}`, header: 'Bearer ' });
-            console.log(res);
+            const user = await getMyInfo();
+            setUser(user);
+            const cart = await request({ path: `carts/${user.id}`, header: `Bearer ` });
+
+            if (cart) {
+                const existsCartDetails = await request({
+                    path: `cart-details/${dish.id}`,
+                    header: `Bearer `
+                });
+
+                await request({
+                    method: existsCartDetails ? 'PUT' : 'POST',
+                    path: `cart-details${existsCartDetails ? `/${dish.id}` : ''}`,
+                    data: existsCartDetails ? { quantity } : { quantity, dish, cart },
+                    header: `Bearer `
+                });
+
+                toast.success(`Đã thêm ${dish.name} vào giỏ hàng.`);
+                setShowModal(false);
+            } else {
+                await request({
+                    method: 'POST',
+                    path: 'carts',
+                    data: { user },
+                    header: `Bearer `
+                });
+            }
         } catch (error) {
-            alert(error)
+            console.error('Error adding to cart:', error);
+            navigate('/account');
         }
     };
 
@@ -83,14 +86,12 @@ const Dishes = () => {
     const handleCloseModal = () => {
         setShowModal(false);
         setSelectedDish(null);
-        setQuantity(1); // Reset số lượng khi đóng modal
+        setQuantity(1);
     };
 
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-    };
+    const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
-    const handleTypeClick = (type) => { // Handle type click
+    const handleTypeClick = (type) => {
         setSelectedTypes((prevSelectedTypes) =>
             prevSelectedTypes.includes(type)
                 ? prevSelectedTypes.filter((t) => t !== type)
@@ -99,31 +100,27 @@ const Dishes = () => {
     };
 
     const filteredDishes = () => {
-        let filtered = dishes;
-        if (selectedTypes.length > 0) { // Apply type filtering
-            filtered = filtered.filter((dish) => selectedTypes.includes(dish.category.name));
+        if (selectedTypes.length > 0) {
+            return dishes.filter((dish) => selectedTypes.includes(dish.category.name));
         }
-        return filtered;
+        return dishes;
     };
 
-    // Pagination logic
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredDishes().slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = filteredDishes().slice(indexOfFirstItem, indexOfLastItem).reverse();
     const totalPages = Math.ceil(filteredDishes().length / itemsPerPage);
-
 
     return (
         <Container className="mt-4">
             <Row className="align-items-center mb-4">
-                <Col>
-                    <h2>Danh sách món ăn</h2>
-                </Col>
+                <Col><h2>Danh sách món ăn</h2></Col>
             </Row>
             <Row>
                 <Col>
                     <div className="filter-bar">
-                        {uniqueTypes?.map((type) => (
+                        {uniqueTypes.map((type) => (
                             <div
                                 key={type}
                                 className={`filter-item ${selectedTypes.includes(type) ? 'active' : ''}`}
@@ -137,49 +134,29 @@ const Dishes = () => {
             </Row>
             <Row>
                 <Col>
-                    <Row>
-                        {filteredDishes()?.map(dish => (
-                            <Col key={dish.id} xs={12} sm={6} md={4} lg={3} className="mb-3">
-                                <Card sx={{ maxWidth: 345, marginBottom: 2, boxShadow: 3 }}
-                                    onClick={() => handleDishClick(dish)}>
-                                    <CardMedia
-                                        component="img"
-                                        alt={dish.name}
-                                        height="170"
-                                        image={`/assets/images/${dish.image}`}
-                                        sx={{ borderRadius: 1 }}
-                                    />
-                                    <CardContent>
-                                        <Typography gutterBottom variant="h5" component="div">
-                                            {dish.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ maxHeight: '50px', overflow: 'hidden' }}>
+                    <ul className="cards">
+                        {currentItems?.map(dish => (
+                            <li key={dish.id}>
+                                <div className="card" onClick={() => handleDishClick(dish)} >
+                                    <img src={`/assets/images/${dish.image}`} className="card__image" alt={dish.name} />
+                                    <div className="card__overlay">
+                                        <div className="card__header">
+                                            <svg className="card__arc" xmlns="http://www.w3.org/2000/svg"><path /></svg>
+                                            <img className="card__thumb" src={`/assets/images/${dish.image}`} alt={dish.name} />
+                                            <div className="card__header-text">
+                                                <h3 className="card__title">{dish.name} </h3>
+                                                <span className="card__status">
+                                                    Giá bán: {dish.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</span>
+                                            </div>
+                                        </div>
+                                        <p className="card__description">
                                             {dish.description}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.primary" sx={{ marginTop: 1 }}>
-                                            Giá: {dish.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-                                        </Typography>
-                                        <Box display="flex" alignItems="center" justifyContent="space-between">
-                                            <Typography variant="body2" color="text.secondary">
-                                                Trạng thái
-                                            </Typography>
-                                            <Typography
-                                                variant="body2"
-                                                align="left"
-                                                sx={{
-                                                    color: dish.status ? 'green' : 'red',
-                                                    fontWeight: 'bold',
-                                                }}
-                                            >
-                                                {dish.status ? 'Còn món' : 'Hết món'}
-                                            </Typography>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Col>
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
                         ))}
-                    </Row>
-
+                    </ul>
                     <Pagination className="justify-content-center mt-4">
                         {Array.from({ length: totalPages }, (_, i) => (
                             <Pagination.Item
@@ -192,9 +169,7 @@ const Dishes = () => {
                         ))}
                     </Pagination>
                 </Col>
-            </Row >
-
-            {/* Modal for dish details */}
+            </Row>
             {
                 selectedDish && (
                     <Modal show={showModal} onHide={handleCloseModal}>
@@ -202,45 +177,37 @@ const Dishes = () => {
                             <Modal.Title>Chi tiết món ăn</Modal.Title>
                         </Modal.Header>
                         <Modal.Body>
-                            <Card sx={{ maxWidth: 345, margin: '0 auto', boxShadow: 1 }}>
+                            <Card sx={{ maxWidth: 345, margin: '0 auto', boxShadow: 3 }}>
                                 <CardMedia
                                     component="img"
-                                    alt={selectedDish.description}
-                                    height="150"
+                                    alt={selectedDish.name}
+                                    height="234"
                                     image={`/assets/images/${selectedDish.image}`}
                                 />
                                 <CardContent>
-                                    <Typography gutterBottom variant="h5" component="div" align="center">
-                                        {selectedDish.name}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" align="center" sx={{ maxHeight: '50px' }}>
-                                        {selectedDish.description}
-                                    </Typography>
+                                    <Typography gutterBottom variant="h5" align="center">{selectedDish.name}</Typography>
+                                    <Typography variant="body2" color="text.secondary" align="center">{selectedDish.description}</Typography>
                                     <Typography variant="h6" color="text.primary" align="center" sx={{ marginTop: 2 }}>
                                         Giá: {selectedDish.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary" align="center">
+                                    <Typography variant="body2" color="text.secondary" align="center" marginBottom={2}>
                                         Trạng thái: {selectedDish.status ? 'Còn món' : 'Hết món'}
                                     </Typography>
-                                    <Form.Group controlId="formQuantity" className='d-flex justify-content-center align-items-center mt-3'>
-                                        <TextField
-                                            label="Số lượng"
-                                            type="number"
-                                            inputProps={{ min: "1" }}
-                                            variant="outlined"
-                                            size="small"
-                                            value={quantity}
-                                            onChange={(e) => setQuantity(Number(e.target.value))}
-                                            sx={{ width: '25%', marginTop: 2 }}
-                                        />
-                                    </Form.Group>
+                                    <TextField
+                                        label="Số lượng"
+                                        type="number"
+                                        inputProps={{ min: 1 }}
+                                        variant="outlined"
+                                        size="small"
+                                        value={quantity}
+                                        onChange={(e) => setQuantity(Number(e.target.value))}
+                                        sx={{ width: '25%', marginTop: 2, margin: '0 auto', display: 'block' }}
+                                    />
                                 </CardContent>
                             </Card>
                         </Modal.Body>
                         <Modal.Footer>
-                            <Button variant="secondary" onClick={handleCloseModal}>
-                                Đóng
-                            </Button>
+                            <Button variant="secondary" onClick={handleCloseModal}>Đóng</Button>
                             <Button variant="primary" onClick={() => addToCart(selectedDish, quantity)} disabled={!quantity}>
                                 Thêm món
                             </Button>

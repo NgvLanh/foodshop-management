@@ -25,9 +25,9 @@ const Discount = () => {
     const fillDataDiscount = async () => {
         try {
             const res = await request({
-                path: 'discounts'
+                path: 'discounts',header:'Bearer ' 
             });
-            setDiscounts(res.data);
+            setDiscounts(res);
         } catch (error) {
             console.log('Error getting discounts:', error);
         }
@@ -48,7 +48,7 @@ const Discount = () => {
                 await request({
                     method: 'PUT',
                     path: `discounts/${discounts[editIndex].id}`,
-                    data: newDiscount
+                    data: newDiscount, header :'Bearer '
                 });
                 fillDataDiscount();
                 toast.success('Đã cập nhật giảm giá thành công!');
@@ -56,7 +56,7 @@ const Discount = () => {
                 await request({
                     method: 'POST',
                     path: 'discounts',
-                    data: newDiscount
+                    data: newDiscount, header :'Bearer '
                 });
                 fillDataDiscount();
                 toast.success('Đã thêm giảm giá thành công!');
@@ -87,7 +87,7 @@ const Discount = () => {
         try {
             await request({
                 method: 'DELETE',
-                path: `discounts/${id}`
+                path: `discounts/${id}`, header :'Bearer '
             });
             fillDataDiscount();
             toast.success('Đã xóa giảm giá thành công!');
@@ -150,7 +150,7 @@ const Discount = () => {
             </Row>
             <Row>
                 <Col>
-                    <Card>
+                    <Card className='rounded-0'>
                         <Card.Body>
                             <Form.Group as={Row} className="mb-3 d-flex justify-content-end">
                                 <Col md={4}>
@@ -184,9 +184,6 @@ const Discount = () => {
                                             <td>{discount.quota}</td>
                                             <td>{discount.percentNumber}%</td>
                                             <td>
-                                                <Button variant="warning" size="sm" onClick={() => handleEdit(index)}>
-                                                    <FaEdit /> Sửa
-                                                </Button>{' '}
                                                 <Button variant="danger" size="sm" onClick={() => confirmDelete(discount.id)}>
                                                     <FaTrash /> Xóa
                                                 </Button>
@@ -241,7 +238,7 @@ const Discount = () => {
                                 placeholder="Hạn mức"
                                 {...register('quota', {
                                     required: 'Hạn mức không được bỏ trống',
-                                    min: { value: 100, message: 'Hạn mức phải lớn hơn 100' }
+                                    min: { value: 250000, message: 'Hạn mức phải lớn hơn 250.000' }
                                 })}
                             />
                             <Form.Label htmlFor="quota">Hạn Mức</Form.Label>
