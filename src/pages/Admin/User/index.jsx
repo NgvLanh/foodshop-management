@@ -58,7 +58,6 @@ const User = () => {
   const handleToggleActive = async (userId) => {
     const user = users.find((c) => c.id === userId);
     const updatedUser = { ...user, activated: !user.activated };
-
     try {
       await request({
         method: 'PUT',
@@ -111,7 +110,7 @@ const User = () => {
                     <th>Họ Tên</th>
                     <th>Số Điện Thoại</th>
                     <th>Email</th>
-                    <th>Hoạt Động</th>
+                    {/* <th>Hoạt Động</th> */}
                     <th>Hành Động</th>
                   </tr>
                 </thead>
@@ -122,13 +121,13 @@ const User = () => {
                       <td>{user.fullName}</td>
                       <td>{user.phoneNumber}</td>
                       <td>{user.email}</td>
-                      <td>
+                      {/* <td>
                         <Form.Check
                           type="checkbox"
                           checked={user.activated}
                           onChange={() => handleToggleActive(user.id)}
                         />
-                      </td>
+                      </td> */}
                       <td>
                         <Button variant="danger" size="sm" onClick={() => confirmDelete(user.id)}>
                           <FaTrash /> Xóa

@@ -1,159 +1,349 @@
 import { Container, Row, Col, Card, Table } from "react-bootstrap";
-import { BsCurrencyDollar, BsFillCartCheckFill, BsGraphUpArrow, BsPiggyBank } from "react-icons/bs";
+import { BsCurrencyDollar, BsFillCartCheckFill, BsGraphUpArrow, BsPiggyBank, } from "react-icons/bs";
 import { Link } from "react-router-dom";
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import ReactApexChart from "react-apexcharts";
 import { useEffect, useState } from "react";
 import request from "../../../config/apiConfig";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
+const ApexChart = () => {
+    const [state, setState] = useState({
+        series: [
+            {
+                name: "Revenue",
+                data: [11, 32, 45, 32, 34, 52, 41, 78, 34, 32, 32, 23], // Adjust this data to reflect yearly data
+            },
+        ],
+        options: {
+            chart: {
+                height: 700,
+                type: "area",
+            },
+            dataLabels: {
+                enabled: false,
+            },
+            stroke: {
+                curve: "smooth",
+            },
+            xaxis: {
+                type: "category",
+                categories: [
+                    "Tháng 1",
+                    "Tháng 2",
+                    "Tháng 3",
+                    "Tháng 4",
+                    "Tháng 5",
+                    "Tháng 6",
+                    "Tháng 7",
+                    "Tháng 8", // Adjust these categories to the years you want to display
+                    "Tháng 9",
+                    "Tháng 10",
+                    "Tháng 11",
+                    "Tháng 12",
+                ],
+            },
+            tooltip: {
+                x: {
+                    format: "yyyy",
+                },
+            },
+            colors: ["#888DF2"], // Thay đổi màu sắc ở đây
+            fill: {
+                colors: ["#94A2F2"], // Thay đổi màu sắc nền của biểu đồ
+            },
+        },
+    });
 
-const lineData = {
-    labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
-    datasets: [
-        {
-            label: 'Chi Phí',
-            data: [12000000, 15000000, 10000000, 18000000, 20000000, 16000000, 17000000, 14000000, 19000000, 22000000, 21000000, 23000000],
-            borderColor: 'rgba(255, 99, 132, 1)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            fill: true,
-        },
-        {
-            label: 'Doanh Số',
-            data: [20000000, 25000000, 22000000, 30000000, 28000000, 27000000, 29000000, 26000000, 31000000, 35000000, 34000000, 37000000],
-            borderColor: 'rgba(54, 162, 235, 1)',
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            fill: true,
-        },
-    ],
+    return (
+        <div id="chart">
+            <ReactApexChart
+                options={state.options}
+                series={state.series}
+                type="area"
+                height={500}
+            />
+        </div>
+    );
 };
-
-const lineOptions = {
-    responsive: true,
-    plugins: {
-        legend: {
-            position: 'top',
-        },
-        title: {
-            display: true,
-            text: 'Chi Phí và Doanh Số Theo Tháng',
-        },
-    },
-};
-
-// Dữ liệu cho bảng doanh thu từ hóa đơn
-const revenueData = [
-    { invoice: 'Hóa Đơn 001', revenue: '1,000,000 VND' },
-    { invoice: 'Hóa Đơn 002', revenue: '2,500,000 VND' },
-    { invoice: 'Hóa Đơn 003', revenue: '3,200,000 VND' },
-    { invoice: 'Hóa Đơn 004', revenue: '1,800,000 VND' },
-    { invoice: 'Hóa Đơn 005', revenue: '2,700,000 VND' },
-];
-
-
 
 const Dashboard = () => {
-
-    const [invoices, setInvoices] = useState([]);
-
+    const [payments, setPayments] = useState([]);
+    const [paymentsTotal, setPaymentsTotal] = useState(0);
+    const [paymentsCount, setPaymentsCount] = useState(0);
+    var count = 0;
+    // Fetch invoices data from API
     useEffect(() => {
-        fetchDataInvoice();
+        fetchDataPayments();
     }, []);
 
-    const fetchDataInvoice = () => {
+    const fetchDataPayments = async () => {
         try {
-            const res = request({
-                path: 'invoices'
-            })
-            setInvoices(res.data);
+            const res = await request({
+                path: "payments",
+                header: 'Bearer '
+            });
+            setPayments(res);
+            res.forEach(element => {
+                count += element.amount;
+                setPaymentsCount(count)
+            });
         } catch (error) {
-            alert(error)
+            alert(error);
         }
-    }
-    
+    };
+
     return (
         <div className="bg-light w-100">
-            <Container fluid style={{ padding: "10px 10px 10px 30px", background: "#f7f4f4", height: '100vh', borderTopLeftRadius: "10px" }}>
-                <Row className="justify-content-center my-4" style={{ padding: "27px 10px 10px 10px", backgroundColor: "#ffffff", borderRadius: "10px" }}>
+            <Container
+                fluid
+                style={{
+                    padding: "10px 10px 10px 30px",
+                    background: "#f7f4f4",
+                    height: "100vh",
+                    borderTopLeftRadius: "10px",
+                }}
+            >
+                <Row
+                    className="justify-content-center my-4"
+                    style={{
+                        padding: "27px 10px 10px 10px",
+                        backgroundColor: "#ffffff",
+                        borderRadius: "10px",
+                    }}
+                >
                     <Col xs={10} style={{ paddingBottom: "20px" }}>
-                        <span className="til1" style={{ fontWeight: "bold", color: "#394064" }}>Doanh Thu Hôm Nay</span>
+                        <span
+                            className="til1"
+                            style={{ fontWeight: "bold", color: "#394064" }}
+                        >
+                            Doanh Thu Hôm Nay
+                        </span>
                     </Col>
                     <Col xs={2} style={{ display: "flex", justifyContent: "right" }}>
                         <span className="link" style={{ marginLeft: "auto" }}>
-                            <Link to={'/admin/dashboard'}>Admin</Link> / Dashboard
+                            <Link to={"/admin/dashboard"}>Admin</Link> / Dashboard
                         </span>
                     </Col>
+                    {/* Card for "Món Ăn" */}
                     <Col md={3} xs={12} className="mb-3 d-flex justify-content-center">
-                        <Card className="shadow-lg w-100" style={{ height: "170px", backgroundColor: "#ffe2e6" }}>
+                        <Card
+                            className="w-100"
+                            style={{
+                                height: "170px",
+                                backgroundColor: "#FFFFFF",
+                                borderRadius: "14px",
+                            }}
+                        >
                             <Card.Body className="d-flex justify-content-around align-items-center">
-                                <div>
-                                    <h2 className="fs-3">230</h2>
-                                    <p className="fs-5">Món Ăn</p>
+                                <BsFillCartCheckFill
+                                    size={30}
+                                    style={{
+                                        width: "70px",
+                                        height: "70px",
+                                        backgroundColor: "#E9EDFB",
+                                        borderRadius: "35px",
+                                        color: "#3359DC",
+                                        padding: "10px",
+                                    }}
+                                />
+                                <div className="d-flex flex-column align-items-center row">
+                                    <p
+                                        className="fs-5"
+                                        style={{ color: "#3B4F6F", fontFamily: "serif" }}
+                                    >
+                                       Số hoá đơn theo ngày 
+                                    </p>
+                                    <h2
+                                        className="fs-3"
+                                        style={{ fontSize: "24px", color: "#161C25" }}
+                                    >
+                                        {}
+                                    </h2>
                                 </div>
-                                <BsFillCartCheckFill size={48} />
                             </Card.Body>
+                            <Card.Footer
+                                style={{
+                                    backgroundColor: "#3359DC",
+                                    paddingTop: "30px",
+                                    borderRadius: "14px",
+                                }}
+                            ></Card.Footer>
                         </Card>
                     </Col>
-                    <Col md={3} xs={12} className="mb-4 d-flex justify-content-center">
-                        <Card className="shadow-lg w-100" style={{ height: "170px", backgroundColor: "#fff4de" }}>
+
+                    {/* Card for "Đơn Hàng" */}
+                    <Col md={3} xs={12} className="mb-3 d-flex justify-content-center">
+                        <Card
+                            className="w-100"
+                            style={{
+                                height: "170px",
+                                backgroundColor: "#FFFFFF",
+                                borderRadius: "14px",
+                            }}
+                        >
                             <Card.Body className="d-flex justify-content-around align-items-center">
-                                <div>
-                                    <h2 className="fs-3">2303</h2>
-                                    <p className="fs-5">Đơn Hàng</p>
+                                <BsCurrencyDollar
+                                    size={30}
+                                    style={{
+                                        width: "70px",
+                                        height: "70px",
+                                        backgroundColor: "#D6F5F3",
+                                        borderRadius: "35px",
+                                        color: "#24948C",
+                                        padding: "10px",
+                                    }}
+                                />
+                                <div className="d-flex flex-column align-items-center row">
+                                    <p
+                                        className="fs-5"
+                                        style={{ color: "#3B4F6F", fontFamily: "serif" }}
+                                    >
+                                        Doanh thu theo ngày
+                                    </p>
+                                    <h2
+                                        className="fs-3"
+                                        style={{ fontSize: "24px", color: "#161C25" }}
+                                    >
+                                        {
+                                            paymentsCount != 0 &&
+                                            paymentsCount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
+                                        }
+                                    </h2>
                                 </div>
-                                <BsCurrencyDollar size={48} />
                             </Card.Body>
+                            <Card.Footer
+                                style={{
+                                    backgroundColor: "#24948C",
+                                    paddingTop: "30px",
+                                    borderRadius: "14px",
+                                }}
+                            ></Card.Footer>
                         </Card>
                     </Col>
-                    <Col md={3} xs={12} className="mb-4 d-flex justify-content-center">
-                        <Card className="shadow-lg w-100" style={{ height: "170px", backgroundColor: "#dcfce7" }}>
+
+                    {/* Card for "Tổng Tiền" */}
+                    <Col md={3} xs={12} className="mb-3 d-flex justify-content-center">
+                        <Card
+                            className="w-100"
+                            style={{
+                                height: "170px",
+                                backgroundColor: "#FFFFFF",
+                                borderRadius: "14px",
+                            }}
+                        >
                             <Card.Body className="d-flex justify-content-around align-items-center">
-                                <div>
-                                    <h2 className="fs-3">12,000,000 VND</h2>
-                                    <p className="fs-5">Tổng Tiền</p>
+                                <BsPiggyBank
+                                    size={30}
+                                    style={{
+                                        width: "70px",
+                                        height: "70px",
+                                        backgroundColor: "#EAEFFB",
+                                        borderRadius: "35px",
+                                        color: "#153070",
+                                        padding: "10px",
+                                    }}
+                                />
+                                <div className="d-flex flex-column align-items-center row">
+                                    <p
+                                        className="fs-5"
+                                        style={{ color: "#3B4F6F", fontFamily: "serif" }}
+                                    >
+                                       Tổng hoá đơn
+                                    </p>
+                                    <h2
+                                        className="fs-3"
+                                        style={{ fontSize: "24px", color: "#161C25" }}
+                                    >
+                                       {}
+                                    </h2>
                                 </div>
-                                <BsPiggyBank size={48} />
                             </Card.Body>
+                            <Card.Footer
+                                style={{
+                                    backgroundColor: "#153070",
+                                    paddingTop: "30px",
+                                    borderRadius: "14px",
+                                }}
+                            ></Card.Footer>
                         </Card>
                     </Col>
-                    <Col md={3} xs={12} className="mb-4 d-flex justify-content-center">
-                        <Card className="shadow-lg w-100" style={{ height: "170px", backgroundColor: "#f4e8ff" }}>
+
+                    {/* Card for "Tăng Trưởng" */}
+                    <Col md={3} xs={12} className="mb-3 d-flex justify-content-center">
+                        <Card
+                            className="w-100"
+                            style={{
+                                height: "170px",
+                                backgroundColor: "#FFFFFF",
+                                borderRadius: "14px",
+                            }}
+                        >
                             <Card.Body className="d-flex justify-content-around align-items-center">
-                                <div>
-                                    <h2 className="fs-3">20%</h2>
-                                    <p className="fs-5">Tăng Trưởng</p>
+                                <BsGraphUpArrow
+                                    size={30}
+                                    style={{
+                                        width: "70px",
+                                        height: "70px",
+                                        backgroundColor: "#FFF9E5",
+                                        borderRadius: "35px",
+                                        color: "#FDCF76",
+                                        padding: "10px",
+                                    }}
+                                />
+                                <div className="d-flex flex-column align-items-center row">
+                                    <p
+                                        className="fs-5"
+                                        style={{ color: "#3B4F6F", fontFamily: "serif" }}
+                                    >
+                                        Tổng tiền
+                                    </p>
+                                    <h2
+                                        className="fs-3"
+                                        style={{ fontSize: "24px", color: "#161C25" }}
+                                    >
+                                        {}
+                                    </h2>
                                 </div>
-                                <BsGraphUpArrow size={48} />
                             </Card.Body>
+                            <Card.Footer
+                                style={{
+                                    backgroundColor: "#FDCF76",
+                                    paddingTop: "30px",
+                                    borderRadius: "14px",
+                                }}
+                            ></Card.Footer>
                         </Card>
                     </Col>
-                </Row>
-                <Row className="pt-1">
+
+                    {/* ApexChart Component */}
                     <Col md={7}>
-                        <Card className="shadow-lg rounded">
+                        <Card className="rounded">
                             <Card.Body>
-                                <Line data={lineData} options={lineOptions} />
+                                <ApexChart /> {/* Use the ApexChart component */}
                             </Card.Body>
                         </Card>
                     </Col>
+
+                    {/* Table Component */}
                     <Col md={5}>
-                        <Card className="shadow-lg rounded">
+                        <Card className=" rounded">
                             <Card.Body>
                                 <h5 className="mb-4">Doanh Thu Từ Hóa Đơn</h5>
                                 <Table bordered hover striped className="table-custom">
                                     <thead>
                                         <tr>
                                             <th>Hóa Đơn</th>
+                                            <th>Phương thức</th>
                                             <th>Ngày</th>
                                             <th>Doanh Thu</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {invoices?.map((invoice) => (
-                                            <tr key={invoice.id}>
-                                                <td>{invoice.id}</td>
-                                                <td>{invoice.paymentDate}</td>
-                                                <td>{invoice.total}</td>
+                                        {payments?.map((payment) => (
+                                            <tr key={payment.id}>
+                                                <td>{payment.id}</td>
+                                                <td>{payment.paymentMethod}</td>
+                                                <td>{payment.date}</td>
+                                                <td>{payment.amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
                                             </tr>
                                         ))}
                                     </tbody>

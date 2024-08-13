@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Modal, Button, Table, Row, Col, Badge } from 'react-bootstrap';
+import request from '../../../config/apiConfig';
+import toast from 'react-hot-toast';
 
-const OrderModal = ({ show, handleClose, cartDetails, totalPrice, address, discount = null, user }) => {
+const OrderModal = ({ show, handleClose, cartDetails, totalPrice, address, discount = null, user, method }) => {
 
     const shippingFee = address?.shippingFee || 0;
     const discountObj = JSON.parse(discount) || {};
@@ -11,6 +13,124 @@ const OrderModal = ({ show, handleClose, cartDetails, totalPrice, address, disco
     const totalWithShippingAndDiscount = totalPrice + shippingFee - (isDiscountApplicable ? discountAmount : 0);
     const cart = cartDetails.filter((c) => c.isSelected === true);
 
+    const createOrder = async (totalPrice, totalWithShippingAndDiscount, address, discount) => {
+        try {
+            const res = await request({
+                method: 'POST',
+                path: 'orders',
+                header: 'Bearer ',
+                data: {
+                    subtotal: totalPrice,
+                    total: totalWithShippingAndDiscount,
+                    address: address,
+                    discount: discount
+                }
+            })
+            if (res) {
+                createOrderDetails(res);
+                await request({
+                    method: 'POST',
+                    path: 'payments',
+                    header: 'Bearer ',
+                    data: {
+                        amount: 0,
+                        paymentMethod: 'OFFLINE',
+                        order: res
+                    }
+                })
+            }
+        } catch (error) {
+            alert(error)
+        }
+    }
+    const createOrderDetails = async (order) => {
+        cart.forEach(async (e) => {
+            try {
+                const res = await request({
+                    method: 'POST',
+                    path: 'order-details',
+                    data: {
+                        price: e.dish.price,
+                        quantity: e.quantity,
+                        dish: e.dish,
+                        order: order
+                    },
+                    header: 'Bearer '
+                })
+            } catch (error) {
+                alert(error);
+                return;
+            }
+        });
+
+        cart.forEach(async (c) => {
+            try {
+                const res = await request({
+                    method: 'DELETE',
+                    path: `cart-details/${c.id}`,
+                    header: 'Bearer '
+                })
+            } catch (error) {
+                alert(error);
+                return;
+            }
+        })
+        toast.success('Đặt hàng thành công.');
+        setTimeout(() => {
+            window.location.reload();
+        }, 700);
+    }
+
+    const handleOrder = async (totalPrice, totalWithShippingAndDiscount, address, discount, method) => {
+        if (method === 'off') {
+            console.log('off method');
+            createOrder(totalPrice, totalWithShippingAndDiscount, address, discount);
+        } else {
+            // toast.error('Phương thức này chưa hỗ trợ');
+            const res = await request({
+                method: 'POST',
+                path: '/api/v1/vnpay/create-order',
+                data: {
+                    total: totalWithShippingAndDiscount,
+                    orderInfo: "Thanh toán hoá đơn",
+                    returnUrl: "http://localhost:8080/api/v1/vnpay/order-return"
+                },
+                header: 'Bearer '
+            });
+            if (res) {
+                window.location.href = res.paymentUrl;
+                try {
+                    const res = await request({
+                        method: 'POST',
+                        path: 'orders',
+                        header: 'Bearer ',
+                        data: {
+                            subtotal: totalPrice,
+                            total: totalWithShippingAndDiscount,
+                            address: address,
+                            discount: discount
+                        }
+                    })
+                    if (res) {
+                        createOrderDetails(res);
+                        const py = await request({
+                            method: 'POST',
+                            path: 'payments',
+                            header: 'Bearer ',
+                            data: {
+                                amount: totalWithShippingAndDiscount,
+                                paymentMethod: 'ONLINE',
+                                order: res
+                            }
+                        })
+                    }
+                } catch (error) {
+                    alert(error)
+                }
+            }
+        }
+        handleClose();
+    }
 
     return (
         <Modal show={show} onHide={handleClose}>
@@ -95,14 +215,16 @@ const OrderModal = ({ show, handleClose, cartDetails, totalPrice, address, disco
                 </Table>
                 <hr />
                 <div className="text-center mt-3">
+                    <img src={`/assets/images/logo.png`} alt="logo" height='100px' />
                     <h6 className="text-uppercase" style={{ fontWeight: 'bold' }}>Cửa hàng của chúng tôi</h6>
-                    <p>Email: shop@example.com</p>
-                    <p>Số điện thoại: 0123 456 789</p>
-                    <p>Địa chỉ: Số 1, Đường ABC, Quận XYZ, TP. HCM</p>
+                    <p className='mb-2'>Email: halatpfoods@gmail.com</p>
+                    <p className='mb-2'>Số điện thoại: 0385420077</p>
+                    <p>Địa chỉ: 63/2 Trần Hưng Đạo, Lê Bình, Cái Răng, Cần Thơ</p>
                 </div>
             </Modal.Body>
             <Modal.Footer style={{ backgroundColor: '#f7f1e3', borderTop: '2px solid #e77f67' }}>
-                <Button variant="success">Đặt Hàng Ngay</Button>
+                <Button variant="success" onClick={() => handleOrder(totalPrice,
+                    totalWithShippingAndDiscount, address, JSON.parse(discount), method)}>Đặt Hàng Ngay</Button>
             </Modal.Footer>
         </Modal>
     );

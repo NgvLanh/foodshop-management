@@ -1,0 +1,224 @@
+body {
+    background-color: #A8A8A8;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.auth-container {
+    margin: 50px auto;
+    width: 800px;
+    height: 550px;
+    position: relative;
+}
+
+.backbox {
+    background-color: #404040;
+    width: 100%;
+    height: 80%;
+    /* Đặt chiều cao 100% để bao phủ toàn bộ */
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    /* Thêm bo góc cho backbox */
+}
+
+.frontbox {
+    background-color: burlywood;
+    border-radius: 20px;
+    height: 100%;
+    width: 45%;
+    /* Đặt chiều rộng 50% */
+    z-index: 10;
+    position: absolute;
+    right: 0;
+    transition: transform 0.4s ease-in-out;
+    /* Thay đổi từ right sang transform */
+    display: flex;
+    margin-right: 45px;
+}
+
+.moving {
+    transform: translateX(-100%);
+    /* Di chuyển sang trái khi chuyển đến form đăng ký */
+}
+
+.login,
+.signup {
+    width: 100%;
+    /* Đặt chiều rộng mỗi form là 100% */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+
+}
+
+.login h2,
+.signup h2 {
+    color: #404040;
+    font-size: 22px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    /* Thêm khoảng cách dưới tiêu đề */
+}
+
+.inputbox {
+    width: 100%;
+    font-size: medium;
+    /* Đặt chiều rộng 100% cho inputbox */
+}
+
+.login input,
+.signup input {
+    width: 100%;
+    height: 40px;
+    background-color: #f2f2f2;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    font-size: 15px;
+    padding: 0 10px;
+    border-radius: 15px;
+    /* Thêm bo góc cho input */
+
+}
+
+.login button,
+.signup button {
+    background-color: #404040;
+    border: none;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 10px;
+    width: 100px;
+    cursor: pointer;
+    margin-top: 10px;
+    /* Thêm khoảng cách trên nút */
+    margin: 20px auto;
+    display: block;
+}
+.login button:hover,
+.signup button:hover {
+    background-color: white;
+    color: #404040;
+    border: none;
+    font-weight: bolder;
+}
+
+.textcontent {
+    color: white;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.loginMsg,
+.signupMsg {
+    width: 50%;
+    /* Đặt chiều rộng 50% để đảm bảo không bị tràn */
+    height: 100%;
+    font-size: 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    /* Thêm padding để tạo khoảng cách */
+
+}
+
+.loginMsg .title,
+.signupMsg .title {
+    font-weight: 300;
+    font-size: 25px;
+    margin-bottom: 20px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    /* Thêm khoảng cách dưới tiêu đề */
+
+}
+
+.loginMsg p,
+.signupMsg p {
+    font-weight: 100;
+    margin-bottom: 20px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+
+    /* Thêm khoảng cách dưới văn bản */
+}
+
+.loginMsg button,
+.signupMsg button {
+    background-color: #404040;
+    border: 2px solid white;
+    border-radius: 10px;
+    color: white;
+    font-size: 12px;
+    font-weight: 300;
+    padding: 10px;
+    margin-top: 20px;
+    justify-content: center;
+
+
+}
+
+.loginMsg button:hover,
+.signupMsg button:hover {
+    background-color: white;
+    color: #404040;
+    font-weight: bolder;
+}
+
+
+.hidden {
+    display: none;
+    /* Ẩn form không được chọn */
+}
+
+/* Đảm bảo không bị chồng lên nhau */
+.frontbox {
+    display: flex;
+    flex-direction: row;
+    /* Đặt hướng của frontbox là row */
+}
+
+.loginMsg {
+    flex: 1;
+    /* Đảm bảo loginMsg chiếm 50% */
+}
+
+.signupMsg {
+    flex: 1;
+    /* Đảm bảo signupMsg chiếm 50% */
+}
+
+/* css bắt lỗi */
+.form-floating {
+    position: relative;
+}
+
+.form-floating .form-control {
+    padding-right: 100px;
+    /* Tạo khoảng trống bên phải cho thông báo lỗi */
+}
+
+.form-floating .text-danger {
+    position: absolute;
+    right: 0;
+    /* Vị trí bên phải của input */
+    top: 90%;
+    /* Canh giữa theo chiều dọc */
+    transform: translateY(-50%);
+    font-size: 15px;
+    /* Điều chỉnh kích thước chữ */
+    white-space: nowrap;
+    background-color: burlywood;
+    padding: 2px 4px;
+    border-radius: 10px;
+    z-index: 1;
+    font-weight: bold;
+}

@@ -11,9 +11,9 @@ import ShippingModal from '../../../components/Client/ShippingModal';
 import { SiElectron } from 'react-icons/si';
 import { FcAddressBook, FcDeleteRow } from 'react-icons/fc';
 import OrderModal from '../../../components/Client/OrderModal';
+import { useCart } from '../../../components/Client/CartContext';
 
 const Cart = () => {
-    const { register, handleSubmit } = useForm();
     const [user, setUser] = useState();
     const [cart, setCart] = useState();
     const [addresses, setAddresses] = useState([]);
@@ -23,6 +23,9 @@ const Cart = () => {
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [shippingAddress, setShippingAddress] = useState('');
     const [discount, setDiscount] = useState();
+    const [payOption, setPayOption] = useState();
+    const { updateCartDetails } = useCart();
+
     useEffect(() => {
         fetchUser();
     }, []);
@@ -88,7 +91,6 @@ const Cart = () => {
                         path: `discounts/${discount}`,
                         header: 'Bearer '
                     });
-                    console.log(res.dateEnd);
                     const discountEndDate = new Date(res.dateEnd);
                     if (res) {
                         if (res.quantity == 0) {
@@ -100,7 +102,6 @@ const Cart = () => {
                         }
                     }
                     setDiscount(res);
-
                 } catch (error) {
                     toast.error('Mã giảm giá của bạn không hợp lệ.');
                 }
@@ -118,20 +119,17 @@ const Cart = () => {
     }
 
     const handleUpdateQuantity = async (item, type, value = null) => {
-        let newQuantity = 1;
         if (type === 'plus') {
-            newQuantity = item.quantity++;
-
+            item.quantity++;
         } else if (type === 'minus') {
-            newQuantity = item.quantity--;
+            item.quantity--;
         } else if (type === 'input') {
-            newQuantity = item.quantity = value ? parseInt(value, 10) : 1;
-
+            item.quantity = value ? parseInt(value, 10) : 1;
         }
-        if (isNaN(newQuantity) || newQuantity < 2) {
-            newQuantity = item.quantity = 1;
+        if (isNaN(item.quantity) || item.quantity < 2) {
+            item.quantity = 1;
         }
-        if (newQuantity > 24) {
+        if (item.quantity > 24) {
             toast.error('Số lượng chỉ nên dưới 25');
             return;
         }
@@ -142,6 +140,7 @@ const Cart = () => {
                 data: item,
                 header: 'Bearer '
             });
+            await updateCartDetails();
             fetchCartDetails();
         } catch (error) {
             alert(error)
@@ -154,6 +153,7 @@ const Cart = () => {
             path: `cart-details/${item.id}`,
             header: 'Bearer '
         });
+        await updateCartDetails();
         fetchCartDetails();
     }
 
@@ -169,7 +169,8 @@ const Cart = () => {
     }
     // Tính tổng món
     const getTotalDish = () => {
-        return cartDetails.reduce((total, item) => total + item.quantity, 0);
+        const itemInCart = cartDetails.reduce((total, item) => total + item.quantity, 0);
+        return itemInCart;
     }
 
     const handleSaveShipping = async (address) => {
@@ -210,11 +211,12 @@ const Cart = () => {
     const handleShowOrderModal = () => {
         fetchDiscount();
         const hasSelectedItems = cartDetails.some(c => c.isSelected);
-
         if (!hasSelectedItems) {
             toast.error('Vui lòng chọn sản phẩm cần mua.')
         } else if (!address) {
             toast.error('Vui lòng chọn một địa chỉ giao hàng.')
+        } else if (!payOption) {
+            toast.error('Vui lòng chọn một phương thức thanh toán.')
         } else {
             setShowOrderModal(true);
         }
@@ -244,7 +246,8 @@ const Cart = () => {
                                             {cartDetails?.map((item, index) => (
                                                 <Row className="mb-4 d-flex align-items-center" key={index}>
                                                     <Col md={1} className='p-0'>
-                                                        <Checkbox checked={item.isSelected} onClick={() => handleUpdateSelected(item)} />
+                                                        <Checkbox checked={item.isSelected}
+                                                            onClick={() => handleUpdateSelected(item)} />
                                                     </Col>
                                                     <Col md={2} className='p-0'>
                                                         <img
@@ -262,7 +265,8 @@ const Cart = () => {
                                                         </h6>
                                                     </Col>
                                                     <Col md={3} className="d-flex align-items-center p-0">
-                                                        <Button variant="link" className="px-2" onClick={() => handleUpdateQuantity(item, 'plus')}>
+                                                        <Button variant="link" className="px-2"
+                                                            onClick={() => handleUpdateQuantity(item, 'plus')}>
                                                             <BiPlus color='black' />
                                                         </Button>
                                                         <Form.Control
@@ -273,7 +277,8 @@ const Cart = () => {
                                                             style={{ width: '50px' }}
                                                             onChange={(e) => handleUpdateQuantity(item, 'input', e.target.value)}
                                                         />
-                                                        <Button variant="link" className="px-2" onClick={() => handleUpdateQuantity(item, 'minus')}>
+                                                        <Button variant="link" className="px-2"
+                                                            onClick={() => handleUpdateQuantity(item, 'minus')}>
                                                             <BiMinus color='black' />
                                                         </Button>
                                                     </Col>
@@ -353,7 +358,9 @@ const Cart = () => {
                                             <div className="mb-5">
                                                 <Form.Group controlId="form3Examplea2">
                                                     <Form.Group className='d-flex align-items-center'>
-                                                        <Form.Check checked
+                                                        <Form.Check
+                                                            onChange={(e) => setPayOption(e.target.value)}
+                                                            value='onl'
                                                             type='radio'
                                                             id='onl'
                                                             name='pay-method'
@@ -363,6 +370,8 @@ const Cart = () => {
                                                     </Form.Group>
                                                     <Form.Group className='d-flex align-items-center'>
                                                         <Form.Check
+                                                            onChange={(e) => setPayOption(e.target.value)}
+                                                            value='off'
                                                             type='radio'
                                                             id='off'
                                                             name='pay-method'
@@ -409,6 +418,7 @@ const Cart = () => {
                 address={address}
                 user={user}
                 discount={JSON.stringify(discount)}
+                method={payOption}
             />
         </section >
     );

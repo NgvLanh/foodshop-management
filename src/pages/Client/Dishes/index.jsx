@@ -7,6 +7,7 @@ import { Cookies } from 'react-cookie';
 import request from '../../../config/apiConfig';
 import { getMyInfo } from '../../../services/Auth';
 import './style.css';
+import { useCart } from '../../../components/Client/CartContext';
 
 const Dishes = () => {
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Dishes = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [quantity, setQuantity] = useState(1);
+    const { updateCartDetails } = useCart();
 
     const itemsPerPage = 8;
     const uniqueTypes = [...new Set(dishes.map(dish => dish.category.name))];
@@ -51,17 +53,16 @@ const Dishes = () => {
 
             if (cart) {
                 const existsCartDetails = await request({
-                    path: `cart-details/${dish.id}`,
+                    path: `cart-details/${dish.id}/${cart.id}`,
                     header: `Bearer `
                 });
-
-                await request({
+                const res = await request({
                     method: existsCartDetails ? 'PUT' : 'POST',
-                    path: `cart-details${existsCartDetails ? `/${dish.id}` : ''}`,
+                    path: `cart-details${existsCartDetails ? `/${dish.id}/${cart.id}` : ''}`,
                     data: existsCartDetails ? { quantity } : { quantity, dish, cart },
                     header: `Bearer `
                 });
-
+                await updateCartDetails();
                 toast.success(`Đã thêm ${dish.name} vào giỏ hàng.`);
                 setShowModal(false);
             } else {
@@ -115,7 +116,7 @@ const Dishes = () => {
     return (
         <Container className="mt-4">
             <Row className="align-items-center mb-4">
-                <Col><h2>Danh sách món ăn</h2></Col>
+                <Col><h2 className='text-center'>Danh sách món ăn</h2></Col>
             </Row>
             <Row>
                 <Col>

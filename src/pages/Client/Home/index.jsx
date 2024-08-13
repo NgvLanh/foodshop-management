@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Container, Button, Modal, Row, Col } from 'react-bootstrap';
-import { Card, CardMedia, CardContent, Typography, TextField, Box } from '@mui/material';
+import { Container, Button, Modal, Row, Col, Carousel, Image } from 'react-bootstrap';
+import { Card, CardMedia, CardContent, Typography, TextField } from '@mui/material';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { Cookies } from 'react-cookie';
-import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
-import 'swiper/css/effect-coverflow';
 import './style.css';
 import request from '../../../config/apiConfig';
 import { getMyInfo } from '../../../services/Auth';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { useCart } from '../../../components/Client/CartContext';
 
 const Dishes = () => {
     const navigate = useNavigate();
@@ -18,6 +18,7 @@ const Dishes = () => {
     const [selectedDish, setSelectedDish] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [quantity, setQuantity] = useState(1);
+    const { updateCartDetails } = useCart();
 
     useEffect(() => {
         fetchDishes();
@@ -38,7 +39,7 @@ const Dishes = () => {
 
         if (!token) {
             toast.error('Vui lòng đăng nhập để tiếp tục.');
-            // setTimeout(() => navigate('/account'), 700);
+            setTimeout(() => navigate('/account'), 700);
             return;
         }
         if (quantity > 25) {
@@ -49,25 +50,23 @@ const Dishes = () => {
         try {
             const user = await getMyInfo();
             setUser(user);
-
             const cart = await request({
                 path: `carts/${user.id}`,
                 header: `Bearer `
             });
-
             if (cart) {
                 const existsCartDetails = await request({
-                    path: `cart-details/${dish.id}`,
+                    path: `cart-details/${dish.id}/${cart.id}`,
                     header: `Bearer `
                 });
-                await request({
+                const res = await request({
                     method: existsCartDetails ? 'PUT' : 'POST',
-                    path: `cart-details${existsCartDetails ? `/${dish.id}` : ''}`,
+                    path: `cart-details${existsCartDetails ? `/${dish.id}/${cart.id}` : ''}`,
                     data: existsCartDetails ? { quantity } : { quantity, dish, cart },
                     header: `Bearer `
                 });
-
                 toast.success(`Đã thêm ${dish.name} vào giỏ hàng.`);
+                await updateCartDetails();
                 setShowModal(false);
             } else {
                 await request({
@@ -94,9 +93,23 @@ const Dishes = () => {
     };
 
     return (
-        <Container className="mt-4">
-            <Row className="align-items-center mb-4">
-                <Col><h2>Danh sách món ăn</h2></Col>
+        <div className="mt-4">
+            <Carousel >
+                {
+                    dishes?.reverse().slice(0, 3).map((dish) => (
+                        <Carousel.Item key={dish.id}>
+                            <img src={`/assets/images/${dish.image}`}
+                                className='image__slide' />
+                            <Carousel.Caption>
+                                <h3>{dish.name}</h3>
+                                <p>{dish.description}</p>
+                            </Carousel.Caption>
+                        </Carousel.Item>
+                    ))
+                }
+            </Carousel>
+            <Row className="align-items-center my-4">
+                <Col><h2 className='text-center'>Danh sách món ăn</h2></Col>
             </Row>
             <Row className="align-items-center pb-4">
                 <Col>
@@ -181,7 +194,7 @@ const Dishes = () => {
                     </Modal.Footer>
                 </Modal>
             )}
-        </Container>
+        </div>
     );
 };
 

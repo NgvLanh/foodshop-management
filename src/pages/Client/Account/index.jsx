@@ -1,28 +1,23 @@
 import { useState } from 'react';
-import { Form, Button, Container, Row, Col, Tabs, Tab } from 'react-bootstrap';
+import { Form, Button, Container } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import toast, { Toaster } from 'react-hot-toast';
-import response from '../../../config/apiConfig'
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getMyInfo, loginApi } from '../../../services/Auth';
 import { useCookies } from 'react-cookie';
 import request from '../../../config/apiConfig';
-import { jwtDecode } from 'jwt-decode';
-
+import './style.css';
 
 const Account = () => {
-    const [cookies, setCookie, removeCookie] = useCookies(["token", "role"]);
+    const [cookies, setCookie] = useCookies(["token", "role"]);
     const navigate = useNavigate();
     const [key, setKey] = useState('login');
     const { register: login, handleSubmit: handleSubmitLogin, formState: { errors: errorsLogin } } = useForm();
-    const { register: register, handleSubmit: handleSubmitRegister, formState: { errors: errorsRegister }, watch } = useForm();
+    const { register: registerForm, handleSubmit: handleSubmitRegister, formState: { errors: errorsRegister }, watch } = useForm();
 
     const onLoginSubmit = async (data) => {
         try {
-            const res = await loginApi({
-                email: data.email,
-                password: data.password
-            })
+            const res = await loginApi({ email: data.email, password: data.password });
 
             if (res.authenticated) {
                 toast.success('Đăng nhập thành công.');
@@ -30,12 +25,12 @@ const Account = () => {
                 try {
                     const userInfo = await getMyInfo();
                     const roles = userInfo.roles;
-                    console.log(roles);
                     if (roles.includes('ADMIN')) {
                         navigate('/admin');
                     } else {
                         navigate('/home');
                     }
+                    window.location.reload();
                 } catch (error) {
                     alert(error);
                 }
@@ -54,7 +49,7 @@ const Account = () => {
                 path: 'users',
                 data: data
             });
-            
+
             if (res) {
                 toast.success('Đăng ký thành công.');
                 setTimeout(() => { window.location.reload() }, 700);
@@ -64,34 +59,38 @@ const Account = () => {
         } catch (error) {
             alert(error);
         }
-
     };
 
     return (
         <Container className="mt-5">
             <Toaster position="top-center" reverseOrder={false} />
-            <Tabs
-                id="auth-tabs"
-                activeKey={key}
-                onSelect={(k) => setKey(k)}
-                className="mb-3 border-0"
-            >
-                <Tab eventKey="login" title="Đăng nhập">
-                    <Row className="align-items-center">
-                        <Col md={6}>
-                            <img
-                                src="/assets/images/login.webp"
-                                alt="Login Illustration"
-                                className="img-fluid p-4"
-                            />
-                        </Col>
-                        <Col md={6}>
-                            <h2 className='text-center mb-2'>Đăng nhập</h2>
+            <div className="auth-container">
+                <div className="backbox">
+                    <div className="loginMsg">
+                        <div className="textcontent">
+                            <p className="title">Bạn chưa có tài khoản?</p>
+                            <p>Đăng ký để mua hàng.</p>
+                            <button onClick={() => setKey('register')}>Đăng Ký</button>
+                        </div>
+                    </div>
+                    <div className="signupMsg">
+                        <div className="textcontent">
+                            <p className="title">Bạn đã có tài khoản?</p>
+                            <p>Đăng nhập để xem tất cả bộ sưu tập của bạn.</p>
+                            <button onClick={() => setKey('login')}>ĐĂNG NHẬP</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={`frontbox ${key === 'login' ? '' : 'moving'}`}>
+                    <div className={`login ${key === 'login' ? 'visible' : 'hidden'}`}>
+                        <h2>ĐĂNG NHẬP</h2>
+                        <div className="inputbox">
                             <Form onSubmit={handleSubmitLogin(onLoginSubmit)}>
-                                <Form.Group className="form-floating mb-3" controlId="formLoginEmail">
+                                <Form.Group className="form-floating mb-3">
                                     <Form.Control
                                         type="email"
-                                        placeholder="Nhập email của bạn"
+                                        placeholder="EMAIL"
                                         {...login('email', {
                                             required: "Email là bắt buộc",
                                             pattern: {
@@ -102,50 +101,41 @@ const Account = () => {
                                     />
                                     <Form.Label>Email</Form.Label>
                                     {errorsLogin.email && (
-                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                        <Form.Text className="text-danger">
                                             {errorsLogin.email.message}
                                         </Form.Text>
                                     )}
                                 </Form.Group>
 
-                                <Form.Group className="form-floating mb-3" controlId="formLoginPassword">
+                                <Form.Group className="form-floating mb-3">
                                     <Form.Control
                                         type="password"
-                                        placeholder="Nhập mật khẩu của bạn"
+                                        placeholder="MẬT KHẨU"
                                         {...login('password', { required: "Mật khẩu là bắt buộc" })}
                                     />
                                     <Form.Label>Mật khẩu</Form.Label>
                                     {errorsLogin.password && (
-                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                        <Form.Text className="text-danger">
                                             {errorsLogin.password.message}
                                         </Form.Text>
                                     )}
                                 </Form.Group>
-
-                                <Button variant="primary" type="submit" className="mt-3">
+                                <Button variant="secondary" type="submit" className="mt-3">
                                     Đăng nhập
                                 </Button>
                             </Form>
-                        </Col>
-                    </Row>
-                </Tab>
-                <Tab eventKey="register" title="Đăng ký">
-                    <Row className="align-items-center">
-                        <Col md={6}>
-                            <img
-                                src="/assets/images/register.jpg"
-                                alt="Register Illustration"
-                                className="img-fluid p-4"
-                            />
-                        </Col>
-                        <Col md={6}>
-                            <h2 className='text-center mb-2'>Đăng ký</h2>
+                        </div>
+                    </div>
+
+                    <div className={`signup ${key === 'register' ? 'visible' : 'hidden'}`}>
+                        <h2>ĐĂNG KÝ</h2>
+                        <div className="inputbox">
                             <Form onSubmit={handleSubmitRegister(onRegisterSubmit)}>
-                                <Form.Group className="form-floating mb-3" controlId="formRegisterName">
+                                <Form.Group className="form-floating mb-3">
                                     <Form.Control
                                         type="text"
-                                        placeholder="Nhập tên của bạn"
-                                        {...register('fullName', {
+                                        placeholder="HỌ TÊN"
+                                        {...registerForm('fullName', {
                                             required: "Tên là bắt buộc",
                                             minLength: {
                                                 value: 2,
@@ -155,17 +145,17 @@ const Account = () => {
                                     />
                                     <Form.Label>Họ tên</Form.Label>
                                     {errorsRegister.fullName && (
-                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                        <Form.Text className="text-danger">
                                             {errorsRegister.fullName.message}
                                         </Form.Text>
                                     )}
                                 </Form.Group>
 
-                                <Form.Group className="form-floating mb-3" controlId="formRegisterEmail">
+                                <Form.Group className="form-floating mb-3">
                                     <Form.Control
                                         type="email"
-                                        placeholder="Nhập email của bạn"
-                                        {...register('email', {
+                                        placeholder="EMAIL"
+                                        {...registerForm('email', {
                                             required: "Email là bắt buộc",
                                             pattern: {
                                                 value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -175,17 +165,17 @@ const Account = () => {
                                     />
                                     <Form.Label>Email</Form.Label>
                                     {errorsRegister.email && (
-                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                        <Form.Text className="text-danger">
                                             {errorsRegister.email.message}
                                         </Form.Text>
                                     )}
                                 </Form.Group>
 
-                                <Form.Group className="form-floating mb-3" controlId="formRegisterPhoneNumber">
+                                <Form.Group className="form-floating mb-3">
                                     <Form.Control
                                         type="text"
-                                        placeholder="Nhập số điện thoại của bạn"
-                                        {...register('phoneNumber', {
+                                        placeholder="SỐ ĐIỆN THOẠI"
+                                        {...registerForm('phoneNumber', {
                                             required: "Số điện thoại là bắt buộc",
                                             pattern: {
                                                 value: /^[0-9]{10}$/,
@@ -195,17 +185,17 @@ const Account = () => {
                                     />
                                     <Form.Label>Số điện thoại</Form.Label>
                                     {errorsRegister.phoneNumber && (
-                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                        <Form.Text className="text-danger">
                                             {errorsRegister.phoneNumber.message}
                                         </Form.Text>
                                     )}
                                 </Form.Group>
 
-                                <Form.Group className="form-floating mb-3" controlId="formRegisterPassword">
+                                <Form.Group className="form-floating mb-3">
                                     <Form.Control
                                         type="password"
-                                        placeholder="Nhập mật khẩu của bạn"
-                                        {...register('password', {
+                                        placeholder="MẬT KHẨU"
+                                        {...registerForm('password', {
                                             required: "Mật khẩu là bắt buộc",
                                             minLength: {
                                                 value: 6,
@@ -215,17 +205,17 @@ const Account = () => {
                                     />
                                     <Form.Label>Mật khẩu</Form.Label>
                                     {errorsRegister.password && (
-                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                        <Form.Text className="text-danger">
                                             {errorsRegister.password.message}
                                         </Form.Text>
                                     )}
                                 </Form.Group>
 
-                                <Form.Group className="form-floating mb-3" controlId="formConfirmPassword">
+                                <Form.Group className="form-floating mb-3">
                                     <Form.Control
                                         type="password"
-                                        placeholder="Xác nhận mật khẩu"
-                                        {...register('confirmPassword', {
+                                        placeholder="XÁC NHẬN MẬT KHẨU"
+                                        {...registerForm('confirmPassword', {
                                             required: "Xác nhận mật khẩu là bắt buộc",
                                             validate: value =>
                                                 value === watch('password') || "Mật khẩu không khớp"
@@ -233,20 +223,19 @@ const Account = () => {
                                     />
                                     <Form.Label>Xác nhận mật khẩu</Form.Label>
                                     {errorsRegister.confirmPassword && (
-                                        <Form.Text className="text-danger d-block mt-1 ms-1">
+                                        <Form.Text className="text-danger">
                                             {errorsRegister.confirmPassword.message}
                                         </Form.Text>
                                     )}
                                 </Form.Group>
-
-                                <Button variant="primary" type="submit" className="mt-3">
+                                <Button variant="secondary" type="submit" className="mt-3">
                                     Đăng ký
                                 </Button>
                             </Form>
-                        </Col>
-                    </Row>
-                </Tab>
-            </Tabs>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </Container>
     );
 };

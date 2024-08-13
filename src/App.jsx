@@ -3,20 +3,16 @@ import Admin from "./pages/Admin/Layout";
 import { Cookies, CookiesProvider } from "react-cookie";
 import Dashboard from "./pages/Admin/Dashboard";
 import Category from "./pages/Admin/Category";
-import Customer from "./pages/Admin/Customer";
+import User from "./pages/Admin/User";
 import Discount from "./pages/Admin/Discount";
-import Dish from "./pages/Admin/Dish";
-import Employee from "./pages/Admin/Employee";
-import Table from "./pages/Admin/Table";
 import Menu from "./pages/Admin/Menu";
-import Reservation from "./pages/Admin/Reservation";
 import Order from "./pages/Admin/Order";
+import PaymentMethod from "./pages/Admin/PaymentMethod";
 import NotFound from "./pages/NotFound";
 import Client from "./pages/Client/Layout";
 import Home from "./pages/Client/Home";
 import AboutUs from "./pages/Client/AboutUs";
 import Cart from "./pages/Client/Cart";
-import YourTable from "./pages/Client/YourTable";
 import Account from "./pages/Client/Account";
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +20,9 @@ import toast, { Toaster } from "react-hot-toast";
 import { getMyInfo } from "./services/Auth";
 import Dishes from "./pages/Client/Dishes";
 import Profile from "./pages/Client/Profile";
+import YourOrder from "./pages/Client/YourOrder";
+import { CartProvider } from "./components/Client/CartContext";
+
 
 
 const ProtectedRoute = ({ element, adminOnly = false }) => {
@@ -48,9 +47,10 @@ const ProtectedRoute = ({ element, adminOnly = false }) => {
         }
       } catch (error) {
         if (!hasShownToast.current) {
-          toast.error('Vui lòng đăng nhập để tiếp tục.');
+          toast.error('Vui lòng đăng nhập để tiếp tục');
           hasShownToast.current = true;
           navigate('/account');
+          new Cookies().remove('token');
         }
       }
     };
@@ -70,9 +70,10 @@ const router = createBrowserRouter(
         <Route path="home" element={<Home />} />
         <Route path="dishes" element={<Dishes />} />
         <Route path="about-us" element={<AboutUs />} />
-        <Route path="Profile" element={<ProtectedRoute element={<Profile />} />} />
+        <Route path="profile" element={<ProtectedRoute element={<Profile />} />} />
         <Route path="cart" element={<ProtectedRoute element={<Cart />} />} />
         <Route path="account" element={<Account />} />
+        <Route path="order" element={<ProtectedRoute element={<YourOrder />} />} />
       </Route>
 
       {/* Đường dẫn cho admin */}
@@ -81,13 +82,10 @@ const router = createBrowserRouter(
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="menu" element={<Menu />} />
         <Route path="category" element={<Category />} />
-        <Route path="customer" element={<Customer />} />
-        <Route path="reservation" element={<Reservation />} />
-        <Route path="employee" element={<Employee />} />
-        <Route path="table" element={<Table />} />
+        <Route path="user" element={<User />} />
         <Route path="discount" element={<Discount />} />
         <Route path="order" element={<Order />} />
-        <Route path="dish" element={<Dish />} />
+        <Route path="payment-method" element={<PaymentMethod />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Route>
@@ -98,7 +96,9 @@ const App = () => {
   return (
     <CookiesProvider>
       <Toaster />
-      <RouterProvider router={router} />
+      <CartProvider>
+        <RouterProvider router={router} />
+      </CartProvider>
     </CookiesProvider>
   );
 };

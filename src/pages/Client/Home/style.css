@@ -1,7 +1,6 @@
 :root {
     --surface-color: #7e5641;
     --curve: 40;
-
 }
 
 * {
@@ -12,6 +11,12 @@ body {
     font-family: 'Noto Sans JP', sans-serif;
     background-color: #fef8f8;
 
+}
+
+.image__slide {
+    width: 100%;
+    height: 678px;
+    background: rgba(0, 0, 0, 0.7) !important;
 }
 
 .cards {
