@@ -7,8 +7,8 @@ import request from '../../../config/apiConfig';
 import { Cookies } from 'react-cookie';
 import './style.css'
 import { PiX } from 'react-icons/pi';
-import { useDropzone } from 'react-dropzone';import './style.css'
-import { PiX } from 'react-icons/pi';
+import { useDropzone } from 'react-dropzone';
+import './style.css'
 const Profile = () => {
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
     const [userInfo, setUserInfo] = useState(null);
