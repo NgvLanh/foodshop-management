@@ -98,7 +98,7 @@ const Dishes = () => {
                 {
                     dishes?.reverse().slice(0, 3).map((dish) => (
                         <Carousel.Item key={dish.id}>
-                            <img src={`/assets/images/${dish.image}`}
+                            <img src={`/file/${dish.image}`}
                                 className='image__slide' />
                             <Carousel.Caption>
                                 <h3>{dish.name}</h3>
@@ -129,11 +129,11 @@ const Dishes = () => {
                             <SwiperSlide key={dish.id} style={{ border: 'solid 1px lightgray', borderRadius: '16px' }}
                                 className="card">
                                 <div onClick={() => handleDishClick(dish)} >
-                                    <img src={`/assets/images/${dish.image}`} className="card__image" alt={dish.name} />
+                                    <img src={`/file/${dish.image}`} className="card__image" alt={dish.name} />
                                     <div className="card__overlay">
                                         <div className="card__header">
                                             <svg className="card__arc" xmlns="http://www.w3.org/2000/svg"><path /></svg>
-                                            <img className="card__thumb" src={`/assets/images/${dish.image}`} alt={dish.name} />
+                                            <img className="card__thumb" src={`/file/${dish.image}`} alt={dish.name} />
                                             <div className="card__header-text">
                                                 <h3 className="card__title">{dish.name} </h3>
                                                 <span className="card__status">
@@ -162,7 +162,7 @@ const Dishes = () => {
                                 component="img"
                                 alt={selectedDish.name}
                                 height="234"
-                                image={`/assets/images/${selectedDish.image}`}
+                                image={`/file/${selectedDish.image}`}
                             />
                             <CardContent>
                                 <Typography gutterBottom variant="h5" align="center">{selectedDish.name}</Typography>
@@ -187,13 +187,13 @@ const Dishes = () => {
                         </Card>
                     </Modal.Body>
                     <Modal.Footer>
-                        
+
                         <Button variant="secondary" onClick={handleCloseModal}>Đóng</Button>
-                        <div class="button" onClick={() => addToCart(selectedDish, quantity)} disabled={!quantity}>
-                            <div class="button-wrapper">
-                                <div class="text">Thêm</div>
-                                <span class="icon">
-                                    <svg viewBox="0 0 16 16" class="bi bi-cart2" fill="currentColor" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
+                        <div className="button" onClick={() => addToCart(selectedDish, quantity)} disabled={!quantity}>
+                            <div className="button-wrapper">
+                                <div className="text">Thêm</div>
+                                <span className="icon">
+                                    <svg viewBox="0 0 16 16" className="bi bi-cart2" fill="currentColor" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M0 2.5A.5.5 0 0 1 .5 2H2a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .485.621l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.485-.379L1.61 3H.5a.5.5 0 0 1-.5-.5zM3.14 5l1.25 5h8.22l1.25-5H3.14zM5 13a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm9-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0z"></path>
                                     </svg>
                                 </span>
@@ -205,6 +205,7 @@ const Dishes = () => {
                     </Modal.Footer>
                 </Modal>
             )}
+
         </div>
     );
 };

@@ -7,7 +7,6 @@ import User from "./pages/Admin/User";
 import Discount from "./pages/Admin/Discount";
 import Menu from "./pages/Admin/Menu";
 import Order from "./pages/Admin/Order";
-import PaymentMethod from "./pages/Admin/PaymentMethod";
 import NotFound from "./pages/NotFound";
 import Client from "./pages/Client/Layout";
 import Home from "./pages/Client/Home";
@@ -85,7 +84,6 @@ const router = createBrowserRouter(
         <Route path="user" element={<User />} />
         <Route path="discount" element={<Discount />} />
         <Route path="order" element={<Order />} />
-        <Route path="payment-method" element={<PaymentMethod />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Route>

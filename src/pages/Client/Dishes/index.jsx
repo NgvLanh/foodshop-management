@@ -139,11 +139,11 @@ const Dishes = () => {
                         {currentItems?.map(dish => (
                             <li key={dish.id}>
                                 <div className="card" onClick={() => handleDishClick(dish)} >
-                                    <img src={`/assets/images/${dish.image}`} className="card__image" alt={dish.name} />
+                                    <img src={`/file/${dish.image}`} className="card__image" alt={dish.name} />
                                     <div className="card__overlay">
                                         <div className="card__header">
                                             <svg className="card__arc" xmlns="http://www.w3.org/2000/svg"><path /></svg>
-                                            <img className="card__thumb" src={`/assets/images/${dish.image}`} alt={dish.name} />
+                                            <img className="card__thumb" src={`/file/${dish.image}`} alt={dish.name} />
                                             <div className="card__header-text">
                                                 <h3 className="card__title">{dish.name} </h3>
                                                 <span className="card__status">

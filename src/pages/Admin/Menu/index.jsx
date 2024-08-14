@@ -117,15 +117,6 @@ const Menu = () => {
           data: newDish,
           header: 'Bearer '
         });
-        const formData = new FormData();
-        formData.append('image', file);
-        const res_up = await request({
-          method: 'POST',
-          path: 'dishes/uploads',
-          data: formData,
-          header: 'Bearer ',
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
         fetchDishData();
         if (res) {
           toast.success('Món đã được cập nhật!');
@@ -142,16 +133,6 @@ const Menu = () => {
           data: newDish,
           header: 'Bearer '
         });
-
-        const formData = new FormData();
-        formData.append('image', file);
-        const res_up = await request({
-          method: 'POST',
-          path: 'dishes/uploads',
-          data: formData,
-          header: 'Bearer ',
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
         fetchDishData();
         if (res) {
           toast.success('Món đã được thêm!');
@@ -159,6 +140,17 @@ const Menu = () => {
       } catch (error) {
         alert(error)
       }
+    }
+    const formData = new FormData();
+    formData.append('image', file);
+    if (file) {
+      const res_up = await request({
+        method: 'POST',
+        path: 'dishes/uploads',
+        data: formData,
+        header: 'Bearer ',
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
     }
     handleCloseModal();
   };
@@ -244,7 +236,7 @@ const Menu = () => {
                 <tbody>
                   {currentDishes?.map(dish => (
                     <tr key={dish.id}>
-                      <td><Image src={`/assets/images/${dish.image}`} thumbnail style={{ width: '100px', height: '80px' }} /></td>
+                      <td><Image src={`file/${dish.image}`} thumbnail style={{ width: '100px', height: '80px' }} /></td>
                       <td>{dish.name}</td>
                       <td>{dish.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
                       <td>{dish.category?.name}</td>

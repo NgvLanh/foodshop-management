@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from 'react-bootstrap';
-import { FaShoppingCart } from 'react-icons/fa';
 import { useCart } from '../CartContext';
+import { FaCartShopping } from 'react-icons/fa6';
 
 const CartIcon = () => {
     const { cartDetails } = useCart();
@@ -9,8 +9,8 @@ const CartIcon = () => {
     var cartItems = cartDetails.reduce((total, item) => total + item.quantity, 0);
 
     return (
-        <div className='position-relative mx-2'>
-            <FaShoppingCart size={24} />
+        <div className='position-relative'>
+            <FaCartShopping size={24} />
             {
                 cartItems > 0 &&
                 <Badge style={{ fontSize: '12px', position: 'absolute', top: '-25%', left: '50%' }}>

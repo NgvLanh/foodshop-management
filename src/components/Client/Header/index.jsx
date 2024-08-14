@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import '../CartIcon'
 import './style.css';
 import CartIcon from '../CartIcon';
+import { CiUser } from 'react-icons/ci';
+import { FaRegCircleUser } from 'react-icons/fa6';
 
 const Header = () => {
     const [user, setUser] = useState({});
@@ -60,16 +62,19 @@ const Header = () => {
                     <NavDropdown
                         align="center"
                         title={
-                            <Image
-                                src={
-                                    user?.image ? `/assets/images/${user?.image}` : "https://mdbcdn.b-cdn.net/img/new/avatars/2.webp"
-                                }
-                                roundedCircle
-                                height="30"
-                                width='30'
-                                alt="Avatar"
-                                loading="lazy"
-                            />
+                            user?.image ?
+                                < Image
+                                    src={`file/${user?.image}`}
+                                    roundedCircle
+                                    height="30"
+                                    width='30'
+                                    alt="Avatar"
+                                    loading="lazy"
+                                /> :
+                                <span>
+                                    <FaRegCircleUser size={24} />
+                                </span>
+
                         }
                         id="navbarDropdownMenuAvatar"
                     >
@@ -82,7 +87,7 @@ const Header = () => {
                     </NavDropdown>
                 </div>
             </Container>
-        </Navbar>
+        </Navbar >
     );
 };
 

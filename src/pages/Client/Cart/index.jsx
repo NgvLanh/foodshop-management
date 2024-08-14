@@ -251,7 +251,7 @@ const Cart = () => {
                                                     </Col>
                                                     <Col md={2} className='p-0'>
                                                         <img
-                                                            src={`/assets/images/${item.dish.image}`}
+                                                            src={`/file/${item.dish.image}`}
                                                             className="img-fluid rounded-3"
                                                             alt={`${item.dish.name}`}
                                                         />
