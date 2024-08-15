@@ -183,7 +183,7 @@ const Dishes = () => {
                                     component="img"
                                     alt={selectedDish.name}
                                     height="234"
-                                    image={`/assets/images/${selectedDish.image}`}
+                                    image={`/file/${selectedDish.image}`}
                                 />
                                 <CardContent>
                                     <Typography gutterBottom variant="h5" align="center">{selectedDish.name}</Typography>

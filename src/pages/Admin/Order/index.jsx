@@ -82,7 +82,7 @@ const Discount = () => {
                 try {
                     await request({
                         method: 'PUT',
-                        path: `payments/${order.id}?money=${res.total}`,
+                        path: `invoices/${order.id}?money=${res.total}`,
                         header: 'Bearer '
                     });
                 } catch (error) {
@@ -208,7 +208,7 @@ const Discount = () => {
                             {orderDetails?.map((o) => (
                                 <tr key={o.id} className='align-middle'>
                                     <td>
-                                        <img src={`/assets/images/${o.dish.image}`} alt={`${o.dish.image}`}
+                                        <img src={`/file/${o.dish.image}`} alt={`${o.dish.image}`}
                                             width='123px' />
                                     </td>
                                     <td>

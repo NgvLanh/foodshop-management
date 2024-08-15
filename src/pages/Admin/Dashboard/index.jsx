@@ -1,16 +1,15 @@
 import { Container, Row, Col, Card, Table } from "react-bootstrap";
-import { BsCurrencyDollar, BsFillCartCheckFill, BsGraphUpArrow, BsPiggyBank, } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { BsCurrencyDollar, BsFillCartCheckFill, BsGraphUpArrow, BsPiggyBank } from "react-icons/bs";
 import ReactApexChart from "react-apexcharts";
 import { useEffect, useState } from "react";
 import request from "../../../config/apiConfig";
 
-const ApexChart = () => {
+const ApexChart = ({ data }) => {
     const [state, setState] = useState({
         series: [
             {
-                name: "Revenue",
-                data: [11, 32, 45, 32, 34, 52, 41, 78, 34, 32, 32, 23], // Adjust this data to reflect yearly data
+                name: "Doanh thu",
+                data: data, // Use the passed data
             },
         ],
         options: {
@@ -34,7 +33,7 @@ const ApexChart = () => {
                     "Tháng 5",
                     "Tháng 6",
                     "Tháng 7",
-                    "Tháng 8", // Adjust these categories to the years you want to display
+                    "Tháng 8",
                     "Tháng 9",
                     "Tháng 10",
                     "Tháng 11",
@@ -46,9 +45,9 @@ const ApexChart = () => {
                     format: "yyyy",
                 },
             },
-            colors: ["#888DF2"], // Thay đổi màu sắc ở đây
+            colors: ["#888DF2"],
             fill: {
-                colors: ["#94A2F2"], // Thay đổi màu sắc nền của biểu đồ
+                colors: ["#94A2F2"],
             },
         },
     });
@@ -66,11 +65,13 @@ const ApexChart = () => {
 };
 
 const Dashboard = () => {
-    const [payments, setPayments] = useState([]);
-    const [paymentsTotal, setPaymentsTotal] = useState(0);
-    const [paymentsCount, setPaymentsCount] = useState(0);
-    var count = 0;
-    // Fetch invoices data from API
+    const [invoices, setInvoices] = useState([]);
+    const [invoicesTotal, setInvoicesTotal] = useState(0);
+    const [invoicesCount, setInvoicesCount] = useState(0);
+    const [invoicesTotalToDay, setInvoicesTotalToDay] = useState(0);
+    const [invoicesCountToDay, setInvoicesCountToDay] = useState(0);
+    const [chartData, setChartData] = useState([]);
+
     useEffect(() => {
         fetchDataPayments();
     }, []);
@@ -78,14 +79,42 @@ const Dashboard = () => {
     const fetchDataPayments = async () => {
         try {
             const res = await request({
-                path: "payments",
-                header: 'Bearer '
+                path: "invoices",
+                header: 'Bearer ',
             });
-            setPayments(res);
-            res.forEach(element => {
-                count += element.amount;
-                setPaymentsCount(count)
+
+            setInvoices(res);
+            setInvoicesCount(res.length);
+
+            const today = new Date().toISOString().split('T')[0];
+
+            let totalToDay = 0;
+            let countToDay = 0;
+
+            res.forEach((invoice) => {
+                const invoiceDate = new Date(invoice.date).toISOString().split('T')[0];
+                if (invoiceDate === today) {
+                    totalToDay += invoice.amount;
+                    countToDay += 1;
+                }
             });
+
+            setInvoicesTotalToDay(totalToDay);
+            setInvoicesCountToDay(countToDay);
+
+            const total = res.reduce((acc, invoice) => acc + invoice.amount, 0);
+            setInvoicesTotal(total);
+
+            // Prepare data for chart
+            const monthlyData = Array(12).fill(0); // Initialize array for 12 months
+
+            res.forEach((invoice) => {
+                const month = new Date(invoice.date).getMonth(); // Get month (0-11)
+                if (invoice.amount !== 0) {
+                    monthlyData[month] += invoice.amount; // Accumulate the amount for each month
+                }
+            });
+            setChartData(monthlyData);
         } catch (error) {
             alert(error);
         }
@@ -110,7 +139,7 @@ const Dashboard = () => {
                         borderRadius: "10px",
                     }}
                 >
-                    <Col xs={10} style={{ paddingBottom: "20px" }}>
+                    <Col xs={12} style={{ paddingBottom: "20px" }}>
                         <span
                             className="til1"
                             style={{ fontWeight: "bold", color: "#394064" }}
@@ -118,12 +147,7 @@ const Dashboard = () => {
                             Doanh Thu Hôm Nay
                         </span>
                     </Col>
-                    <Col xs={2} style={{ display: "flex", justifyContent: "right" }}>
-                        <span className="link" style={{ marginLeft: "auto" }}>
-                            <Link to={"/admin/dashboard"}>Admin</Link> / Dashboard
-                        </span>
-                    </Col>
-                    {/* Card for "Món Ăn" */}
+
                     <Col md={3} xs={12} className="mb-3 d-flex justify-content-center">
                         <Card
                             className="w-100"
@@ -150,13 +174,13 @@ const Dashboard = () => {
                                         className="fs-5"
                                         style={{ color: "#3B4F6F", fontFamily: "serif" }}
                                     >
-                                       Số hoá đơn theo ngày 
+                                        Hoá đơn hôm nay
                                     </p>
                                     <h2
                                         className="fs-3"
                                         style={{ fontSize: "24px", color: "#161C25" }}
                                     >
-                                        {}
+                                        {invoicesCountToDay}
                                     </h2>
                                 </div>
                             </Card.Body>
@@ -170,7 +194,6 @@ const Dashboard = () => {
                         </Card>
                     </Col>
 
-                    {/* Card for "Đơn Hàng" */}
                     <Col md={3} xs={12} className="mb-3 d-flex justify-content-center">
                         <Card
                             className="w-100"
@@ -197,16 +220,14 @@ const Dashboard = () => {
                                         className="fs-5"
                                         style={{ color: "#3B4F6F", fontFamily: "serif" }}
                                     >
-                                        Doanh thu theo ngày
+                                        Doanh thu hôm nay
                                     </p>
                                     <h2
                                         className="fs-3"
                                         style={{ fontSize: "24px", color: "#161C25" }}
                                     >
-                                        {
-                                            paymentsCount != 0 &&
-                                            paymentsCount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
-                                        }
+                                        {invoicesCount !== 0 &&
+                                            invoicesTotalToDay.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                                     </h2>
                                 </div>
                             </Card.Body>
@@ -220,7 +241,6 @@ const Dashboard = () => {
                         </Card>
                     </Col>
 
-                    {/* Card for "Tổng Tiền" */}
                     <Col md={3} xs={12} className="mb-3 d-flex justify-content-center">
                         <Card
                             className="w-100"
@@ -247,13 +267,13 @@ const Dashboard = () => {
                                         className="fs-5"
                                         style={{ color: "#3B4F6F", fontFamily: "serif" }}
                                     >
-                                       Tổng hoá đơn
+                                        Tổng hoá đơn
                                     </p>
                                     <h2
                                         className="fs-3"
                                         style={{ fontSize: "24px", color: "#161C25" }}
                                     >
-                                       {}
+                                        {invoices.length}
                                     </h2>
                                 </div>
                             </Card.Body>
@@ -267,7 +287,6 @@ const Dashboard = () => {
                         </Card>
                     </Col>
 
-                    {/* Card for "Tăng Trưởng" */}
                     <Col md={3} xs={12} className="mb-3 d-flex justify-content-center">
                         <Card
                             className="w-100"
@@ -283,9 +302,9 @@ const Dashboard = () => {
                                     style={{
                                         width: "70px",
                                         height: "70px",
-                                        backgroundColor: "#FFF9E5",
+                                        backgroundColor: "#FFE4E4",
                                         borderRadius: "35px",
-                                        color: "#FDCF76",
+                                        color: "#F93B5B",
                                         padding: "10px",
                                     }}
                                 />
@@ -294,19 +313,19 @@ const Dashboard = () => {
                                         className="fs-5"
                                         style={{ color: "#3B4F6F", fontFamily: "serif" }}
                                     >
-                                        Tổng tiền
+                                        Tổng doanh thu
                                     </p>
                                     <h2
                                         className="fs-3"
                                         style={{ fontSize: "24px", color: "#161C25" }}
                                     >
-                                        {}
+                                        {invoicesTotal.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                                     </h2>
                                 </div>
                             </Card.Body>
                             <Card.Footer
                                 style={{
-                                    backgroundColor: "#FDCF76",
+                                    backgroundColor: "#F93B5B",
                                     paddingTop: "30px",
                                     borderRadius: "14px",
                                 }}
@@ -314,18 +333,16 @@ const Dashboard = () => {
                         </Card>
                     </Col>
 
-                    {/* ApexChart Component */}
                     <Col md={7}>
                         <Card className="rounded">
                             <Card.Body>
-                                <ApexChart /> {/* Use the ApexChart component */}
+                                <ApexChart data={chartData} />
                             </Card.Body>
                         </Card>
                     </Col>
 
-                    {/* Table Component */}
                     <Col md={5}>
-                        <Card className=" rounded">
+                        <Card className="rounded">
                             <Card.Body>
                                 <h5 className="mb-4">Doanh Thu Từ Hóa Đơn</h5>
                                 <Table bordered hover striped className="table-custom">
@@ -338,7 +355,7 @@ const Dashboard = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {payments?.map((payment) => (
+                                        {invoices.map((payment) => (
                                             <tr key={payment.id}>
                                                 <td>{payment.id}</td>
                                                 <td>{payment.paymentMethod}</td>

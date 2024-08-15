@@ -30,7 +30,7 @@ const OrderModal = ({ show, handleClose, cartDetails, totalPrice, address, disco
                 createOrderDetails(res);
                 await request({
                     method: 'POST',
-                    path: 'payments',
+                    path: 'invoices',
                     header: 'Bearer ',
                     data: {
                         amount: 0,
@@ -83,7 +83,6 @@ const OrderModal = ({ show, handleClose, cartDetails, totalPrice, address, disco
 
     const handleOrder = async (totalPrice, totalWithShippingAndDiscount, address, discount, method) => {
         if (method === 'off') {
-            console.log('off method');
             createOrder(totalPrice, totalWithShippingAndDiscount, address, discount);
         } else {
             // toast.error('Phương thức này chưa hỗ trợ');
@@ -115,7 +114,7 @@ const OrderModal = ({ show, handleClose, cartDetails, totalPrice, address, disco
                         createOrderDetails(res);
                         const py = await request({
                             method: 'POST',
-                            path: 'payments',
+                            path: 'invoices',
                             header: 'Bearer ',
                             data: {
                                 amount: totalWithShippingAndDiscount,
